@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const domainRoutes = require('./routes/domain');
@@ -45,9 +44,8 @@ app.use(express.json());
 // Security Middlewares
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "unsafe-none" }
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" } // Balanced for Google Auth
 }));
-app.use(mongoSanitize());
 
 // Rate Limiting
 const limiter = rateLimit({
