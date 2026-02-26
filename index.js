@@ -39,12 +39,17 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// JSON Parser (Must be before mongoSanitize)
+app.use(express.json());
+
+// Security Middlewares
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginOpenerPolicy: { policy: "unsafe-none" }
 }));
 app.use(mongoSanitize());
 
+// Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per windowMs
@@ -59,9 +64,6 @@ const strictLimiter = rateLimit({
 });
 app.use('/api/auth/forgot-password', strictLimiter);
 app.use('/api/auth/reset-password', strictLimiter);
-
-// JSON Parser
-app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -85,12 +87,6 @@ app.get('/', (req, res) => {
     res.send('AI IT Platform API is running');
 });
 
-// Start Server Immediately
-const server = app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🔗 Health check available at http://localhost:${PORT}/health`);
-});
-
 // Database connection (Asynchronous)
 const connectDB = async () => {
     try {
@@ -103,6 +99,11 @@ const connectDB = async () => {
 };
 
 connectDB();
+
+// Start Server
+const server = app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
 
 // Global Error Handler
 app.use((err, req, res, next) => {
