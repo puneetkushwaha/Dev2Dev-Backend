@@ -27,18 +27,17 @@ router.post('/submit-exam', protect, submitExam);
 router.post('/submit-mock', protect, submitMock);
 router.delete('/delete-account', protect, deleteAccount);
 
-// Resume Analyzer Proxy Routes (Protected)
-router.post('/parse-resume', protect, upload.single('file'), parseResume);
-router.post('/analyze-resume', protect, analyzeResume);
+// Removed protected resume routes
 
-// Additional AI Proxy Routes (Protected)
-router.post('/interview-chat', protect, interviewChat);
-router.post('/mock-interview-eval', protect, mockInterviewEval);
-router.post('/recommend-domain', protect, recommendDomain);
-router.post('/generate-lesson', protect, generateLesson);
-router.post('/ai-chat', protect, aiChat);
-
-// Public AI Routes
+// Public AI Proxy Routes (Original AI service had no authentication layer)
+router.post('/interview-chat', interviewChat);
+router.post('/mock-interview-eval', mockInterviewEval);
+router.post('/recommend-domain', recommendDomain);
+router.post('/generate-lesson', generateLesson);
+router.post('/ai-chat', aiChat);
 router.post('/generate-roadmap', generateRoadmap);
+router.post('/parse-resume', upload.single('file'), parseResume);
+router.post('/analyze-resume', analyzeResume);
+
 
 module.exports = router;
