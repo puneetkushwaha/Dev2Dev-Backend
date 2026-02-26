@@ -4,7 +4,11 @@ const Exam = require('../models/Exam');
 const Domain = require('../models/Domain');
 const Topic = require('../models/Topic');
 const MockStat = require('../models/MockStat');
+const Interview = require('../models/Interview'); // Added for deleteAccount
 const axios = require('axios');
+const path = require('path');
+const fs = require('fs');
+const FormData = require('form-data');
 
 // Helper to update User Stats (Streak, Heatmap, Difficulty counts)
 const updateUserStats = async (user, isPassed, difficulty, language, tags) => {
@@ -672,16 +676,18 @@ const getProblemById = async (req, res) => {
 
 const deleteAccount = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
+        const userId = req.user._id;
 
-        await User.findByIdAndDelete(req.user.id);
-        res.json({ message: 'Account deleted successfully' });
+        // Delete user's interviews
+        await Interview.deleteMany({ userId });
+
+        // Delete the user
+        await User.findByIdAndDelete(userId);
+
+        res.json({ message: 'Account and associated data deleted successfully' });
     } catch (error) {
-        console.error("Delete account error", error);
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Delete Account Error:', error);
+        res.status(500).json({ message: 'Server Error occurred while deleting account' });
     }
 };
 
@@ -717,6 +723,119 @@ const getMockSet = async (req, res) => {
     }
 };
 
+// --- Proxy Controllers for Resume Analyzer ---
+const parseResume = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const formData = new FormData();
+        // Append the buffer directly. We need to pass the filename so the receiving python server knows how to handle it
+        formData.append('file', req.file.buffer, {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+        });
+
+        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/parse_resume`;
+
+        const response = await axios.post(aiUrl, formData, {
+            headers: {
+                ...formData.getHeaders(),
+            },
+        });
+
+        res.json(response.data);
+    } catch (error) {
+        console.error('Parse Resume Error:', error.message);
+        res.status(500).json({ message: 'Error parsing resume', details: error.message });
+    }
+};
+
+const analyzeResume = async (req, res) => {
+    try {
+        const { resume_text, target_role } = req.body;
+        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/analyze_resume`;
+
+        const response = await axios.post(aiUrl, {
+            resume_text,
+            target_role
+        });
+
+        res.json(response.data);
+    } catch (error) {
+        console.error('Analyze Resume Error:', error.message);
+        res.status(500).json({ message: 'Error analyzing resume', details: error.message });
+    }
+};
+
+const interviewChat = async (req, res) => {
+    try {
+        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/interview_chat`;
+
+        // Use native fetch to support streaming from the AI service back to the client
+        const fileResponse = await fetch(aiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(req.body)
+        });
+
+        // Pipe the stream back
+        if (fileResponse.body) {
+            fileResponse.body.pipe(res);
+        } else {
+            res.status(500).json({ message: 'No stream available' });
+        }
+    } catch (error) {
+        console.error('Interview Chat Proxy Error:', error.message);
+        res.status(500).json({ message: 'Error connecting to AI chat service', details: error.message });
+    }
+};
+
+const mockInterviewEval = async (req, res) => {
+    try {
+        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/mock_interview_eval`;
+        const response = await axios.post(aiUrl, req.body);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Mock Interview Eval Proxy Error:', error.message);
+        res.status(500).json({ message: 'Error evaluating mock interview', details: error.message });
+    }
+};
+
+const recommendDomain = async (req, res) => {
+    try {
+        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/recommend_domain`;
+        const response = await axios.post(aiUrl, req.body);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Recommend Domain Proxy Error:', error.message);
+        res.status(500).json({ message: 'Error getting domain recommendation', details: error.message });
+    }
+};
+
+const generateLesson = async (req, res) => {
+    try {
+        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/generate_lesson`;
+        const response = await axios.post(aiUrl, req.body);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Generate Lesson Proxy Error:', error.message);
+        res.status(500).json({ message: 'Error generating lesson', details: error.message });
+    }
+};
+
+const aiChat = async (req, res) => {
+    try {
+        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/chat`;
+        const response = await axios.post(aiUrl, req.body);
+        res.json(response.data);
+    } catch (error) {
+        console.error('AI Chat Proxy Error:', error.message);
+        res.status(500).json({ message: 'Error connecting to AI teacher', details: error.message });
+    }
+};
+
 module.exports = {
     getUserProfile,
     updateUserProfile,
@@ -730,5 +849,12 @@ module.exports = {
     deleteAccount,
     getMockStats,
     submitMock,
-    getMockSet
+    getMockSet,
+    parseResume,
+    analyzeResume,
+    interviewChat,
+    mockInterviewEval,
+    recommendDomain,
+    generateLesson,
+    aiChat
 };
