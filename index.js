@@ -14,6 +14,9 @@ const tutorialRoutes = require('./routes/tutorial');
 const notificationRoutes = require('./routes/notification');
 const paymentRoutes = require('./routes/payment');
 
+const app = express();
+const PORT = process.env.PORT || 5000;
+
 // Middleware
 const allowedOrigins = [
     'http://localhost:5173',
