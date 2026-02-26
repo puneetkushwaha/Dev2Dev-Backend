@@ -836,6 +836,17 @@ const aiChat = async (req, res) => {
     }
 };
 
+const generateRoadmap = async (req, res) => {
+    try {
+        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/generate_roadmap`;
+        const response = await axios.post(aiUrl, req.body);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Generate Roadmap Proxy Error:', error.message);
+        res.status(500).json({ message: 'Error generating roadmap', details: error.message });
+    }
+};
+
 module.exports = {
     getUserProfile,
     updateUserProfile,
@@ -856,5 +867,6 @@ module.exports = {
     mockInterviewEval,
     recommendDomain,
     generateLesson,
-    aiChat
+    aiChat,
+    generateRoadmap
 };

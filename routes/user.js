@@ -5,7 +5,7 @@ const {
     saveRecommendation, completeTopic, submitExam,
     getExams, getProblems, getProblemById, deleteAccount,
     getMockStats, submitMock, getMockSet, parseResume, analyzeResume,
-    interviewChat, mockInterviewEval, recommendDomain, generateLesson, aiChat
+    interviewChat, mockInterviewEval, recommendDomain, generateLesson, aiChat, generateRoadmap
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 const multer = require('multer');
@@ -37,5 +37,8 @@ router.post('/mock-interview-eval', protect, mockInterviewEval);
 router.post('/recommend-domain', protect, recommendDomain);
 router.post('/generate-lesson', protect, generateLesson);
 router.post('/ai-chat', protect, aiChat);
+
+// Public AI Routes
+router.post('/generate-roadmap', generateRoadmap);
 
 module.exports = router;
