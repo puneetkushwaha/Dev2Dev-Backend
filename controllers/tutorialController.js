@@ -1,4 +1,5 @@
 const Tutorial = require('../models/Tutorial');
+const User = require('../models/User');
 
 // Get all tutorials (listing)
 const getTutorials = async (req, res) => {
@@ -19,6 +20,7 @@ const getTutorialById = async (req, res) => {
 
         // Access Control: Check if tutorial is premium
         if (tutorial.isPremium) {
+            if (!req.user) return res.status(401).json({ message: 'Login required for premium tutorials' });
             const user = await User.findById(req.user.id);
             if (!user) return res.status(401).json({ message: 'User not found' });
 
