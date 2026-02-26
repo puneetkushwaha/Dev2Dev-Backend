@@ -82,10 +82,6 @@ const submitMock = async (req, res) => {
         const now = new Date();
         const hasProAccess = user.proExpiry && user.proExpiry > now;
 
-        if (!isRun && !hasProAccess && user.freeAiInterviewCount >= 3) {
-            return res.status(403).json({ message: 'Free limit of 3 AI interviews reached. Please upgrade to Pro.' });
-        }
-
         let codingScore = 0;
         let totalCount = answers.length;
 
