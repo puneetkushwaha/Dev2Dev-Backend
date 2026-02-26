@@ -79,6 +79,11 @@ router.post('/verify-payment', protect, async (req, res) => {
 
             await user.save();
 
+            // Send Confirmation Email
+            const { sendPaymentConfirmation } = require('../utils/emailService');
+            const amount = PRICE_MAP[type] || 0;
+            sendPaymentConfirmation(user.email, user.name, type, amount);
+
             const hasProAccess = user.proExpiry && user.proExpiry > now;
             const validTutorials = user.unlockedTutorials ? user.unlockedTutorials.filter(t => t.expiry && t.expiry > now).map(t => t.tutorialId) : [];
 
