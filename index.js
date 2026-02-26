@@ -14,12 +14,33 @@ const tutorialRoutes = require('./routes/tutorial');
 const notificationRoutes = require('./routes/notification');
 const paymentRoutes = require('./routes/payment');
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-
 // Middleware
-app.use(helmet()); // Secure HTTP headers
-app.use(mongoSanitize()); // Prevent NoSQL Injection
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5000',
+    'https://dev2dev-beryl.vercel.app',
+    'https://dev2dev.online',
+    'https://www.dev2dev.online'
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "unsafe-none" }
+}));
+app.use(mongoSanitize());
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -36,26 +57,7 @@ const strictLimiter = rateLimit({
 app.use('/api/auth/forgot-password', strictLimiter);
 app.use('/api/auth/reset-password', strictLimiter);
 
-const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:5000',
-    'https://dev2dev-beryl.vercel.app',
-    'https://dev2dev.online',
-    'https://www.dev2dev.online'
-];
-
-app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
-    credentials: true
-}));
+// JSON Parser
 app.use(express.json());
 
 // Routes
