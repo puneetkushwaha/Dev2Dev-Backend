@@ -93,7 +93,7 @@ const submitMock = async (req, res) => {
         let codingResults = [];
         if (answers.length > 0) {
             try {
-                const aiRes = await axios.post('http://localhost:8000/evaluate_exam_coding', {
+                const aiRes = await axios.post(`${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/evaluate_exam_coding`, {
                     domain: 'Programming',
                     answers: answers.map(ans => ({ questionText: ans.questionText, userAnswer: ans.userAnswer })),
                     language: language || 'javascript'
@@ -440,7 +440,7 @@ const submitExam = async (req, res) => {
         let codingResults = [];
         if (codingAnswersForAI.length > 0) {
             try {
-                const aiRes = await axios.post('http://localhost:8000/evaluate_exam_coding', {
+                const aiRes = await axios.post(`${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/evaluate_exam_coding`, {
                     domain: exam.domainId?.name || 'Programming',
                     answers: codingAnswersForAI,
                     language: language || 'javascript'
