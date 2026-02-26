@@ -4,9 +4,9 @@ const { getTutorials, getTutorialById } = require('../controllers/tutorialContro
 const { protect } = require('../middleware/authMiddleware');
 
 // Get all tutorials
-router.get('/', protect, getTutorials);
+router.get('/', getTutorials);
 
 // Get single tutorial
-router.get('/:id', protect, getTutorialById);
+router.get('/:id', getTutorialById);
 
 module.exports = router;

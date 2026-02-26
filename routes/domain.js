@@ -7,8 +7,7 @@ const { protect, admin } = require('../middleware/authMiddleware');
 router.get('/', getDomains);
 
 // IMPORTANT: specific routes must come before parameterized ones
-// All following routes require authentication
-router.use(protect);
+// IMPORTANT: specific routes must come before parameterized ones
 
 router.get('/topics/corecs', async (req, res) => {
     try {
@@ -22,7 +21,7 @@ router.get('/topics/corecs', async (req, res) => {
 });
 
 // Cache AI-generated lesson content - ADMIN ONLY
-router.post('/topics/cache-content', admin, cacheTopicContent);
+router.post('/topics/cache-content', protect, admin, cacheTopicContent);
 
 // Protected: get topics for a domain by domain ID
 router.get('/topics/by-domain/:domainId', async (req, res) => {
