@@ -731,31 +731,39 @@ const parseResume = async (req, res) => {
         }
 
         const formData = new FormData();
-        // Append the buffer directly. We need to pass the filename so the receiving python server knows how to handle it
         formData.append('file', req.file.buffer, {
             filename: req.file.originalname,
             contentType: req.file.mimetype,
         });
 
-        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/parse_resume`;
+        // Safeguard against double slashes if the user added a trailing slash in the env variable
+        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const aiUrl = `${baseUrl}/parse_resume`;
 
         const response = await axios.post(aiUrl, formData, {
             headers: {
                 ...formData.getHeaders(),
+                'Content-Length': formData.getLengthSync()
             },
         });
 
         res.json(response.data);
     } catch (error) {
         console.error('Parse Resume Error:', error.message);
-        res.status(500).json({ message: 'Error parsing resume', details: error.message });
+        if (error.response) console.error('AI Detail:', error.response.data);
+        res.status(500).json({
+            message: 'Error parsing resume',
+            details: error.message,
+            ai_details: error.response?.data || 'No response data from AI Service'
+        });
     }
 };
 
 const analyzeResume = async (req, res) => {
     try {
         const { resume_text, target_role } = req.body;
-        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/analyze_resume`;
+        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const aiUrl = `${baseUrl}/analyze_resume`;
 
         const response = await axios.post(aiUrl, {
             resume_text,
@@ -765,13 +773,18 @@ const analyzeResume = async (req, res) => {
         res.json(response.data);
     } catch (error) {
         console.error('Analyze Resume Error:', error.message);
-        res.status(500).json({ message: 'Error analyzing resume', details: error.message });
+        res.status(500).json({
+            message: 'Error analyzing resume',
+            details: error.message,
+            ai_details: error.response?.data || 'No response data from AI Service'
+        });
     }
 };
 
 const interviewChat = async (req, res) => {
     try {
-        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/interview_chat`;
+        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const aiUrl = `${baseUrl}/interview_chat`;
 
         // Use native fetch to support streaming from the AI service back to the client
         const fileResponse = await fetch(aiUrl, {
@@ -794,7 +807,8 @@ const interviewChat = async (req, res) => {
 
 const mockInterviewEval = async (req, res) => {
     try {
-        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/mock_interview_eval`;
+        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const aiUrl = `${baseUrl}/mock_interview_eval`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
@@ -805,7 +819,8 @@ const mockInterviewEval = async (req, res) => {
 
 const recommendDomain = async (req, res) => {
     try {
-        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/recommend_domain`;
+        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const aiUrl = `${baseUrl}/recommend_domain`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
@@ -816,7 +831,8 @@ const recommendDomain = async (req, res) => {
 
 const generateLesson = async (req, res) => {
     try {
-        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/generate_lesson`;
+        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const aiUrl = `${baseUrl}/generate_lesson`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
@@ -827,7 +843,8 @@ const generateLesson = async (req, res) => {
 
 const aiChat = async (req, res) => {
     try {
-        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/chat`;
+        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const aiUrl = `${baseUrl}/chat`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
@@ -838,7 +855,8 @@ const aiChat = async (req, res) => {
 
 const generateRoadmap = async (req, res) => {
     try {
-        const aiUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/generate_roadmap`;
+        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const aiUrl = `${baseUrl}/generate_roadmap`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
