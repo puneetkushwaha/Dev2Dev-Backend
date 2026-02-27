@@ -19,13 +19,12 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 const allowedOrigins = [
-    'https://develevate.netlify.app',
     'https://dev2dev-beryl.vercel.app',
     'https://dev2dev-backend.onrender.com',
     'https://dev2dev-ai.onrender.com',
     'http://localhost:5173',
     'http://localhost:5000',
-    process.env.FRONTEND_URL
+    (process.env.FRONTEND_URL || process.env.CORS_ORIGIN || '').replace(/\/$/, '')
 ].filter(Boolean);
 
 app.use(cors({

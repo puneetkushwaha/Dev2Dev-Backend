@@ -160,7 +160,7 @@ const forgotPassword = async (req, res) => {
         await user.save();
 
         // Create reset URL
-        const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+        const FRONTEND_URL = (process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:5173').replace(/\/$/, '');
         const resetUrl = `${FRONTEND_URL}/reset-password/${resetToken}`;
         console.log("-----------------------------------------");
         console.log("PASSOWRD RESET SYSTEM (DEV MODE)");
