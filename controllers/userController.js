@@ -741,6 +741,7 @@ const parseResume = async (req, res) => {
 
         // Safeguard against double slashes if the user added a trailing slash in the env variable
         const aiUrl = `${AI_BASE_URL}/parse_resume`;
+        console.log(`[AI-PROXY] Attempting to parse resume at: ${aiUrl}`);
 
         const response = await axios.post(aiUrl, formData, {
             headers: {
@@ -765,6 +766,7 @@ const analyzeResume = async (req, res) => {
     try {
         const { resume_text, target_role } = req.body;
         const aiUrl = `${AI_BASE_URL}/analyze_resume`;
+        console.log(`[AI-PROXY] Attempting to analyze resume at: ${aiUrl}`);
 
         const response = await axios.post(aiUrl, {
             resume_text,
@@ -785,6 +787,7 @@ const analyzeResume = async (req, res) => {
 const interviewChat = async (req, res) => {
     try {
         const aiUrl = `${AI_BASE_URL}/interview_chat`;
+        console.log(`[AI-PROXY] Initiating interview chat streaming at: ${aiUrl}`);
 
         // Use native fetch to support streaming from the AI service back to the client
         const fileResponse = await fetch(aiUrl, {
