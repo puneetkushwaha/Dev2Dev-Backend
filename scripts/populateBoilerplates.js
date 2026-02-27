@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const Domain = require('../models/Domain');
 const Topic = require('../models/Topic');
 const Exam = require('../models/Exam');
 
@@ -45,8 +46,12 @@ async function populate() {
         console.log('Connected to MongoDB');
 
         // 1. Process Topics
+        const interviewDomain = await Domain.findOne({ name: "Interview Preparation" });
         const topics = await Topic.find({
-            lessonType: 'practice'
+            $or: [
+                { lessonType: 'practice' },
+                { domainId: interviewDomain?._id }
+            ]
         });
 
         console.log(`Processing ${topics.length} topics...`);

@@ -708,11 +708,10 @@ const getMockSet = async (req, res) => {
         if (!domain) return res.status(404).json({ message: 'Interview domain not found' });
 
         const pool = await Topic.find({
-            domainId: domain._id,
-            lessonType: 'practice'
+            domainId: domain._id
         });
 
-        if (pool.length === 0) return res.status(404).json({ message: 'No practice questions in pool' });
+        if (pool.length === 0) return res.status(404).json({ message: 'No questions in pool for this domain' });
 
         // Simple shuffle
         const shuffled = pool.sort(() => 0.5 - Math.random());
