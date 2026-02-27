@@ -6,15 +6,19 @@ const Exam = require('../models/Exam');
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function generateBoilerplates(title, description) {
     try {
         const response = await axios.post(`${AI_SERVICE_URL}/generate_boilerplates`, {
             title,
             description
         });
+        await sleep(3000); // 3 second delay to avoid rate limits
         return response.data;
     } catch (error) {
         console.error(`Failed to generate boilerplates for ${title}:`, error.message);
+        await sleep(5000); // Longer sleep on error
         return null;
     }
 }
@@ -33,15 +37,16 @@ async function populate() {
 
         console.log(`Processing ${topics.length} topics...`);
         for (const topic of topics) {
-            if (!topic.content.starterCodes || Object.keys(topic.content.starterCodes).length < 5) {
-                console.log(`Generating boilerplates for Topic: ${topic.title}`);
-                const description = topic.content.problemStatement || topic.content.description || topic.title;
-                const boilerplates = await generateBoilerplates(topic.title, description);
-                if (boilerplates) {
-                    topic.content.starterCodes = boilerplates;
-                    await topic.save();
-                    console.log(`Updated codes for ${topic.title}`);
-                }
+            console.log(`Generating boilerplates for Topic: ${topic.title}`);
+            const description = topic.content.problemStatement || topic.content.description || topic.title;
+            const boilerplates = await generateBoilerplates(topic.title, description);
+            if (boilerplates) {
+                console.log(`AI returned boilerplates for ${topic.title}`);
+                await Topic.updateOne(
+                    { _id: topic._id },
+                    { $set: { "content.starterCodes": boilerplates } }
+                );
+                console.log(`Updated codes for Topic: ${topic.title}`);
             }
         }
 
@@ -49,21 +54,21 @@ async function populate() {
         const exams = await Exam.find({ 'questions.type': 'coding' });
         console.log(`Processing ${exams.length} exams...`);
         for (const exam of exams) {
-            let updated = false;
-            for (let q of exam.questions) {
-                if (q.type === 'coding' && (!q.starterCodes || Object.keys(q.starterCodes).length < 5)) {
+            for (let i = 0; i < exam.questions.length; i++) {
+                const q = exam.questions[i];
+                if (q.type === 'coding') {
                     console.log(`Generating boilerplates for Exam: ${exam.title}`);
                     const boilerplates = await generateBoilerplates(exam.title, q.questionText);
                     if (boilerplates) {
-                        q.starterCodes = boilerplates;
-                        updated = true;
+                        console.log(`AI returned boilerplates for Exam: ${exam.title}`);
+                        const updatePath = `questions.${i}.starterCodes`;
+                        await Exam.updateOne(
+                            { _id: exam._id },
+                            { $set: { [updatePath]: boilerplates } }
+                        );
+                        console.log(`Updated codes for Exam: ${exam.title} (Question ${i})`);
                     }
                 }
-            }
-            if (updated) {
-                exam.markModified('questions');
-                await exam.save();
-                console.log(`Updated codes for Exam: ${exam.title}`);
             }
         }
 
