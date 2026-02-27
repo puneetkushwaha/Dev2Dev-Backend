@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const Topic = require('../models/Topic');
 const Exam = require('../models/Exam');
 const fs = require('fs');
@@ -17,9 +18,9 @@ async function debug() {
         exams.forEach(e => {
             const hasCodes = e.questions.some(q => (q.starterCodes && Object.keys(q.starterCodes).length > 0) || (q.testCases && q.testCases.length > 0));
             if (hasCodes) {
-                output += `Exam: ${e.title}\nCodes: ${JSON.stringify(e.questions.map(q => q.starterCodes), null, 2)}\nTestCases: ${JSON.stringify(e.questions.map(q => q.testCases), null, 2)}\n\n`;
+                output += `Exam: ${e.title} (ID: ${e._id})\nCodes: ${JSON.stringify(e.questions.map(q => q.starterCodes), null, 2)}\nTestCases: ${JSON.stringify(e.questions.map(q => q.testCases), null, 2)}\n\n`;
             } else {
-                output += `Exam: ${e.title} (No codes/testcases)\n`;
+                output += `Exam: ${e.title} (ID: ${e._id}) (No codes/testcases)\n`;
             }
         });
 
@@ -27,9 +28,9 @@ async function debug() {
         topics.forEach(t => {
             const hasCodes = (t.content.starterCodes && Object.keys(t.content.starterCodes).length > 0) || (t.content.testCases && t.content.testCases.length > 0);
             if (hasCodes) {
-                output += `Topic: ${t.title}\nCodes: ${JSON.stringify(t.content.starterCodes, null, 2)}\nTestCases: ${JSON.stringify(t.content.testCases, null, 2)}\n\n`;
+                output += `Topic: ${t.title} (ID: ${t._id})\nCodes: ${JSON.stringify(t.content.starterCodes, null, 2)}\nTestCases: ${JSON.stringify(t.content.testCases, null, 2)}\n\n`;
             } else {
-                output += `Topic: ${t.title} (No codes/testcases)\n`;
+                output += `Topic: ${t.title} (ID: ${t._id}) (No codes/testcases)\n`;
             }
         });
 

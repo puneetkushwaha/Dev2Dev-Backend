@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const axios = require('axios');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const Topic = require('../models/Topic');
 const Exam = require('../models/Exam');
 
