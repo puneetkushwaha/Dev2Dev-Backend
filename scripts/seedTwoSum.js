@@ -48,11 +48,11 @@ You can return the answer in any order.
         constraints: "2 <= nums.length <= 10^4",
         starterCode: "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    \n};",
         starterCodes: {
-            javascript: "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    \n};",
-            python: "class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        ",
-            java: "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}",
-            cpp: "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        \n    }\n};",
-            c: "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* twoSum(int* nums, int numsSize, int target, int* returnSize) {\n    \n}"
+            javascript: "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n     \n       \n    };",
+            python: "class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        \n        pass",
+            java: "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n         \n           \n        }\n}",
+            cpp: "void twoSum(vector<int>& nums, int target) {\n     \n       \n    }",
+            c: "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* twoSum(int* nums, int numsSize, int target, int* returnSize) {\n     \n       \n    }"
         },
         testCases: [
             { input: "[2,7,11,15], 9", expected: "[0,1]", description: "Standard case" },
