@@ -14,16 +14,19 @@ const notificationRoutes = require('./routes/notification');
 const paymentRoutes = require('./routes/payment');
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Render load balancer)
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 const allowedOrigins = [
+    'https://develevate.netlify.app',
+    'https://dev2dev-beryl.vercel.app',
+    'https://dev2dev-backend.onrender.com',
+    'https://dev2dev-ai.onrender.com',
     'http://localhost:5173',
     'http://localhost:5000',
-    'https://dev2dev-beryl.vercel.app',
-    'https://dev2dev.online',
-    'https://www.dev2dev.online'
-];
+    process.env.FRONTEND_URL
+].filter(Boolean);
 
 app.use(cors({
     origin: function (origin, callback) {

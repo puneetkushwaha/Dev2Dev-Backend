@@ -10,6 +10,9 @@ const path = require('path');
 const fs = require('fs');
 const FormData = require('form-data');
 
+// AI Service Configuration
+const AI_BASE_URL = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+
 // Helper to update User Stats (Streak, Heatmap, Difficulty counts)
 const updateUserStats = async (user, isPassed, difficulty, language, tags) => {
     const now = new Date();
@@ -93,7 +96,7 @@ const submitMock = async (req, res) => {
         let codingResults = [];
         if (answers.length > 0) {
             try {
-                const aiRes = await axios.post(`${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/evaluate_exam_coding`, {
+                const aiRes = await axios.post(`${AI_BASE_URL}/evaluate_exam_coding`, {
                     domain: 'Programming',
                     answers: answers.map(ans => ({ questionText: ans.questionText, userAnswer: ans.userAnswer })),
                     language: language || 'javascript'
@@ -440,7 +443,7 @@ const submitExam = async (req, res) => {
         let codingResults = [];
         if (codingAnswersForAI.length > 0) {
             try {
-                const aiRes = await axios.post(`${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/evaluate_exam_coding`, {
+                const aiRes = await axios.post(`${AI_BASE_URL}/evaluate_exam_coding`, {
                     domain: exam.domainId?.name || 'Programming',
                     answers: codingAnswersForAI,
                     language: language || 'javascript'
@@ -737,8 +740,7 @@ const parseResume = async (req, res) => {
         });
 
         // Safeguard against double slashes if the user added a trailing slash in the env variable
-        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
-        const aiUrl = `${baseUrl}/parse_resume`;
+        const aiUrl = `${AI_BASE_URL}/parse_resume`;
 
         const response = await axios.post(aiUrl, formData, {
             headers: {
@@ -762,8 +764,7 @@ const parseResume = async (req, res) => {
 const analyzeResume = async (req, res) => {
     try {
         const { resume_text, target_role } = req.body;
-        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
-        const aiUrl = `${baseUrl}/analyze_resume`;
+        const aiUrl = `${AI_BASE_URL}/analyze_resume`;
 
         const response = await axios.post(aiUrl, {
             resume_text,
@@ -783,8 +784,7 @@ const analyzeResume = async (req, res) => {
 
 const interviewChat = async (req, res) => {
     try {
-        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
-        const aiUrl = `${baseUrl}/interview_chat`;
+        const aiUrl = `${AI_BASE_URL}/interview_chat`;
 
         // Use native fetch to support streaming from the AI service back to the client
         const fileResponse = await fetch(aiUrl, {
@@ -795,7 +795,8 @@ const interviewChat = async (req, res) => {
 
         // Pipe the stream back
         if (fileResponse.body) {
-            fileResponse.body.pipe(res);
+            const { Readable } = require('stream');
+            Readable.fromWeb(fileResponse.body).pipe(res);
         } else {
             res.status(500).json({ message: 'No stream available' });
         }
@@ -807,8 +808,7 @@ const interviewChat = async (req, res) => {
 
 const mockInterviewEval = async (req, res) => {
     try {
-        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
-        const aiUrl = `${baseUrl}/mock_interview_eval`;
+        const aiUrl = `${AI_BASE_URL}/mock_interview_eval`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
@@ -819,8 +819,7 @@ const mockInterviewEval = async (req, res) => {
 
 const recommendDomain = async (req, res) => {
     try {
-        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
-        const aiUrl = `${baseUrl}/recommend_domain`;
+        const aiUrl = `${AI_BASE_URL}/recommend_domain`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
@@ -831,8 +830,7 @@ const recommendDomain = async (req, res) => {
 
 const generateLesson = async (req, res) => {
     try {
-        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
-        const aiUrl = `${baseUrl}/generate_lesson`;
+        const aiUrl = `${AI_BASE_URL}/generate_lesson`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
@@ -843,8 +841,7 @@ const generateLesson = async (req, res) => {
 
 const aiChat = async (req, res) => {
     try {
-        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
-        const aiUrl = `${baseUrl}/chat`;
+        const aiUrl = `${AI_BASE_URL}/chat`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
@@ -855,8 +852,7 @@ const aiChat = async (req, res) => {
 
 const generateRoadmap = async (req, res) => {
     try {
-        const baseUrl = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
-        const aiUrl = `${baseUrl}/generate_roadmap`;
+        const aiUrl = `${AI_BASE_URL}/generate_roadmap`;
         const response = await axios.post(aiUrl, req.body);
         res.json(response.data);
     } catch (error) {
