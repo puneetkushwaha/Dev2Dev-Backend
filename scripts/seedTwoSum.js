@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Topic = require('../models/Topic');
-require('dotenv').config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const twoSumProblem = {
     title: "Two Sum",
@@ -46,6 +47,13 @@ You can return the answer in any order.
         sampleOutput: "[0,1]",
         constraints: "2 <= nums.length <= 10^4",
         starterCode: "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    \n};",
+        starterCodes: {
+            javascript: "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    \n};",
+            python: "class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        ",
+            java: "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}",
+            cpp: "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        \n    }\n};",
+            c: "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* twoSum(int* nums, int numsSize, int target, int* returnSize) {\n    \n}"
+        },
         testCases: [
             { input: "[2,7,11,15], 9", expected: "[0,1]", description: "Standard case" },
             { input: "[3,2,4], 6", expected: "[1,2]", description: "Target at indices 1 and 2" },

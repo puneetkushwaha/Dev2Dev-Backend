@@ -623,6 +623,7 @@ const getProblems = async (req, res) => {
                 explanation: p.content?.explanation,
                 testCases: p.content?.testCases,
                 starterCode: p.content?.starterCode,
+                starterCodes: p.content?.starterCodes,
                 constraints: p.content?.constraints || "",
                 hints: p.content?.keyPoints || [],
                 tags: p.content?.tags || []
@@ -663,6 +664,7 @@ const getProblemById = async (req, res) => {
                     explanation: topic.content?.explanation,
                     testCases: topic.content?.testCases,
                     starterCode: topic.content?.starterCode,
+                    starterCodes: topic.content?.starterCodes,
                     constraints: topic.content?.constraints || "",
                     hints: topic.content?.keyPoints || [],
                     tags: topic.content?.tags || []

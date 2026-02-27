@@ -10,7 +10,15 @@ const ExamSchema = new mongoose.Schema({
         options: [String],
         correctAnswer: String,
         difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], default: 'Medium' },
-        explanation: String
+        explanation: String,
+        starterCode: String,
+        starterCodes: {
+            javascript: String,
+            python: String,
+            java: String,
+            cpp: String,
+            c: String
+        }
     }],
     durationMinutes: { type: Number, default: 30 },
     totalAttempts: { type: Number, default: 0 },

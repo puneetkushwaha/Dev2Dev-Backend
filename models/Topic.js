@@ -20,6 +20,13 @@ const TopicSchema = new mongoose.Schema({
         sampleOutput: String,
         constraints: String,
         starterCode: String,
+        starterCodes: {
+            javascript: String,
+            python: String,
+            java: String,
+            cpp: String,
+            c: String
+        },
         testCases: [{
             input: String,
             expected: String,
