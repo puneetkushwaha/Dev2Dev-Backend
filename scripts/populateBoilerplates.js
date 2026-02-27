@@ -14,11 +14,26 @@ async function generateBoilerplates(title, description) {
             title,
             description
         });
-        await sleep(3000); // 3 second delay to avoid rate limits
+        await sleep(3000);
         return response.data;
     } catch (error) {
         console.error(`Failed to generate boilerplates for ${title}:`, error.message);
-        await sleep(5000); // Longer sleep on error
+        await sleep(5000);
+        return null;
+    }
+}
+
+async function generateTestCases(title, description) {
+    try {
+        const response = await axios.post(`${AI_SERVICE_URL}/generate_test_cases`, {
+            title,
+            description
+        });
+        await sleep(3000);
+        return response.data;
+    } catch (error) {
+        console.error(`Failed to generate test cases for ${title}:`, error.message);
+        await sleep(5000);
         return null;
     }
 }
@@ -37,42 +52,53 @@ async function populate() {
 
         console.log(`Processing ${topics.length} topics...`);
         for (const topic of topics) {
-            console.log(`Generating boilerplates for Topic: ${topic.title}`);
+            console.log(`FORCE Generating for Topic: ${topic.title}`);
             const description = topic.content.problemStatement || topic.content.description || topic.title;
+
             const boilerplates = await generateBoilerplates(topic.title, description);
             if (boilerplates) {
-                console.log(`AI returned boilerplates for ${topic.title}`);
-                await Topic.updateOne(
-                    { _id: topic._id },
-                    { $set: { "content.starterCodes": boilerplates } }
-                );
-                console.log(`Updated codes for Topic: ${topic.title}`);
+                await Topic.updateOne({ _id: topic._id }, { $set: { "content.starterCodes": boilerplates } });
+                console.log(`Updated codes for ${topic.title}`);
+            }
+
+            const testCases = await generateTestCases(topic.title, description);
+            if (testCases) {
+                await Topic.updateOne({ _id: topic._id }, { $set: { "content.testCases": testCases } });
+                console.log(`Updated test cases for ${topic.title}`);
             }
         }
 
-        // 2. Process Exams (Coding exclusive)
+        // 2. Process Exams
         const exams = await Exam.find({ 'questions.type': 'coding' });
         console.log(`Processing ${exams.length} exams...`);
         for (const exam of exams) {
             for (let i = 0; i < exam.questions.length; i++) {
                 const q = exam.questions[i];
                 if (q.type === 'coding') {
-                    console.log(`Generating boilerplates for Exam: ${exam.title}`);
+                    console.log(`FORCE Generating for Exam: ${exam.title} - Q${i}`);
+
                     const boilerplates = await generateBoilerplates(exam.title, q.questionText);
                     if (boilerplates) {
-                        console.log(`AI returned boilerplates for Exam: ${exam.title}`);
-                        const updatePath = `questions.${i}.starterCodes`;
                         await Exam.updateOne(
                             { _id: exam._id },
-                            { $set: { [updatePath]: boilerplates } }
+                            { $set: { [`questions.${i}.starterCodes`]: boilerplates } }
                         );
-                        console.log(`Updated codes for Exam: ${exam.title} (Question ${i})`);
+                        console.log(`Updated codes for Exam: ${exam.title}`);
+                    }
+
+                    const testCases = await generateTestCases(exam.title, q.questionText);
+                    if (testCases) {
+                        await Exam.updateOne(
+                            { _id: exam._id },
+                            { $set: { [`questions.${i}.testCases`]: testCases } }
+                        );
+                        console.log(`Updated test cases for Exam: ${exam.title}`);
                     }
                 }
             }
         }
 
-        console.log('Finished populating boilerplates.');
+        console.log('Finished populating boilerplates and test cases.');
         process.exit(0);
     } catch (error) {
         console.error('Error in population script:', error);

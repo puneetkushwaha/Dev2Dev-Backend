@@ -18,7 +18,12 @@ const ExamSchema = new mongoose.Schema({
             java: String,
             cpp: String,
             c: String
-        }
+        },
+        testCases: [{
+            input: String,
+            expected: String,
+            description: String
+        }]
     }],
     durationMinutes: { type: Number, default: 30 },
     totalAttempts: { type: Number, default: 0 },
