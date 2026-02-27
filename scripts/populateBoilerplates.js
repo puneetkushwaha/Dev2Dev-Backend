@@ -46,8 +46,6 @@ async function populate() {
 
         // 1. Process Topics
         const topics = await Topic.find({
-            isCoreCS: true,
-            subject: 'DSA',
             lessonType: 'practice'
         });
 

@@ -707,17 +707,22 @@ const getMockSet = async (req, res) => {
         const domain = await Domain.findOne({ name: "Interview Preparation" });
         if (!domain) return res.status(404).json({ message: 'Interview domain not found' });
 
-        const pool = await Topic.find({ domainId: domain._id });
+        const pool = await Topic.find({
+            domainId: domain._id,
+            lessonType: 'practice'
+        });
 
-        if (pool.length === 0) return res.status(404).json({ message: 'No questions in pool' });
+        if (pool.length === 0) return res.status(404).json({ message: 'No practice questions in pool' });
 
         // Simple shuffle
         const shuffled = pool.sort(() => 0.5 - Math.random());
         const selected = shuffled.slice(0, count).map(q => ({
             id: q._id,
             title: q.title,
-            description: q.content?.description || q.description,
+            description: q.content?.problemStatement || q.content?.description || q.description,
             starterCode: q.content?.starterCode || "// Start coding here",
+            starterCodes: q.content?.starterCodes,
+            testCases: q.content?.testCases,
             difficulty: q.content?.difficulty || q.difficulty
         }));
 
