@@ -137,6 +137,7 @@ async function main() {
             'content.explanation': result.theory || result.explanation || '',
             'content.description': result.exercise || '',
             'content.starterCode': result.solution_stub || result.solutionStub || '',
+            'content.testCases': Array.isArray(result.testCases) ? result.testCases : [],
             'content.sampleInput': '',
             'content.sampleOutput': '',
             'content.keyPoints': [],
