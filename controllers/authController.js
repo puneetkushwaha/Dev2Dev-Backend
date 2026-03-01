@@ -63,7 +63,9 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
-        if (user && (await bcrypt.compare(password, user.password))) {
+        console.log(`[AUTH DEBUG] Login attempt: ${email}, Password exists: ${!!password}, User hash exists: ${!!(user && user.password)}`);
+
+        if (user && user.password && typeof user.password === 'string' && typeof password === 'string' && (await bcrypt.compare(password, user.password))) {
             const now = new Date();
             const hasProAccess = user.proExpiry && user.proExpiry > now;
             const validTutorials = user.unlockedTutorials ? user.unlockedTutorials.filter(t => t.expiry && t.expiry > now).map(t => t.tutorialId) : [];

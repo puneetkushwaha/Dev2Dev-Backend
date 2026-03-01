@@ -223,7 +223,9 @@ const getUserProfile = async (req, res) => {
         });
 
         const totalPoints = (solvedStats.easy * 10) + (solvedStats.medium * 20) + (solvedStats.hard * 50);
-        console.log(`[DEBUG] Syncing: User ${user.email}, Solved ${solvedProblemIds.size}, Points ${totalPoints}`);
+        if (process.env.DEBUG_SYNC === 'true') {
+            console.log(`[DEBUG] Syncing: User ${user.email}, Solved ${solvedProblemIds.size}, Points ${totalPoints}`);
+        }
 
         const validTutorials = user.unlockedTutorials ? user.unlockedTutorials.filter(t => t.expiry && t.expiry > now).map(t => t.tutorialId) : [];
 
@@ -309,7 +311,11 @@ const selectDomain = async (req, res) => {
         return res.status(503).json({ message: 'Database Connection Issue. Cannot update domain track.' });
     }
     try {
-        const { domainName } = req.body;
+        const { domainName } = req.body || {};
+        if (!domainName) {
+            console.error("[DEBUG] selectDomain: domainName is missing from req.body");
+            return res.status(400).json({ message: 'domainName is required in body' });
+        }
         const user = await User.findById(req.user.id);
 
         if (!user) {
