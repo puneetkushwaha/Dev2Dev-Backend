@@ -45,6 +45,17 @@ const UserSchema = new mongoose.Schema({
         medium: { type: Number, default: 0 },
         hard: { type: Number, default: 0 }
     },
+    totalSolved: { type: Number, default: 0 }, // Track total accepted DSA problems
+    isPremium: { type: Boolean, default: false }, // Manual VIP override for all features
+
+    // Achievements
+    badges: [{
+        id: { type: String, required: true }, // e.g. 'streak_30', 'solver_100'
+        name: { type: String, required: true }, // 'Monthly Master', 'Knight'
+        icon: { type: String, required: true }, // 'Flame', 'Swords', etc (can be icon names for Lucide)
+        description: { type: String },
+        earnedAt: { type: Date, default: Date.now }
+    }],
 
     progress: {
         completedTopics: [{ type: String }],

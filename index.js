@@ -12,6 +12,7 @@ const interviewRoutes = require('./routes/interview');
 const tutorialRoutes = require('./routes/tutorial');
 const notificationRoutes = require('./routes/notification');
 const paymentRoutes = require('./routes/payment');
+const leaderboardRoutes = require('./routes/leaderboard');
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Render load balancer)
@@ -52,15 +53,19 @@ app.use(helmet({
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again after 15 minutes'
+    max: 5000, // Balanced for development and production
+    message: { message: 'Too many requests from this IP, please try again after 15 minutes' },
+    standardHeaders: true,
+    legacyHeaders: false,
 });
 app.use('/api/', limiter); // Apply rate limiting to all API routes
 
 const strictLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5, // Only 5 requests per 15 mins
-    message: 'Too many recovery attempts. Please try again after 15 minutes.'
+    max: 50, // Increased for testing
+    message: { message: 'Too many attempts. Please try again after 15 minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
 });
 app.use('/api/auth/forgot-password', strictLimiter);
 app.use('/api/auth/reset-password', strictLimiter);
@@ -74,6 +79,7 @@ app.use('/api/interviews', interviewRoutes);
 app.use('/api/tutorials', tutorialRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

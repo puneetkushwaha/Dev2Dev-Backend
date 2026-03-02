@@ -13,6 +13,33 @@ const FormData = require('form-data');
 // AI Service Configuration
 const AI_BASE_URL = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
 
+// Helper to check and award badges
+const checkAndAwardBadges = (user) => {
+    if (!user.badges) user.badges = [];
+    const hasBadge = (badgeId) => user.badges.some(b => b.id === badgeId);
+
+    const award = (id, name, icon, desc) => {
+        if (!hasBadge(id)) {
+            user.badges.push({ id, name, icon, description: desc, earnedAt: new Date() });
+        }
+    };
+
+    // Streak Badges
+    if (user.streak >= 3) award('streak_3', 'Spark', 'Zap', 'Maintain a 3-day streak.');
+    if (user.streak >= 7) award('streak_7', 'Weekly Warrior', 'Flame', 'Maintain a 7-day streak.');
+    if (user.streak >= 30) award('streak_30', 'Monthly Master', 'Star', 'Maintain a 30-day streak.');
+    if (user.streak >= 100) award('streak_100', 'Century Club', 'Crown', 'Maintain a 100-day streak.');
+    if (user.streak >= 365) award('streak_365', 'Unstoppable', 'Diamond', 'Maintain a 365-day streak.');
+
+    // Solver Badges
+    const solved = user.totalSolved || 0;
+    if (solved >= 10) award('solver_10', 'Novice Coder', 'Award', 'Solve 10 DSA problems.');
+    if (solved >= 50) award('solver_50', 'Problem Solver', 'Target', 'Solve 50 DSA problems.');
+    if (solved >= 100) award('solver_100', 'Knight', 'Swords', 'Solve 100 DSA problems.');
+    if (solved >= 250) award('solver_250', 'Algorithmic Expert', 'BrainCircuit', 'Solve 250 DSA problems.');
+    if (solved >= 500) award('solver_500', 'Grandmaster', 'Trophy', 'Solve 500 DSA problems.');
+};
+
 // Helper to update User Stats (Streak, Heatmap, Difficulty counts)
 const updateUserStats = async (user, isPassed, difficulty, language, tags, isDSA = false) => {
     const now = new Date();
@@ -48,12 +75,23 @@ const updateUserStats = async (user, isPassed, difficulty, language, tags, isDSA
     // 3. Update Solved Stats if passed
     if (isPassed && difficulty) {
         const diffKey = difficulty.toLowerCase(); // easy, medium, hard
-        if (user.solvedStats && user.solvedStats[diffKey] !== undefined) {
-            // Note: We might want to check if they solved this specific problem before
-            // but for now we increment on every pass for simplicity or "Total AC"
-            user.solvedStats[diffKey] += 1;
+
+        if (!user.solvedStats) {
+            user.solvedStats = { easy: 0, medium: 0, hard: 0 };
         }
+
+        if (user.solvedStats[diffKey] !== undefined) {
+            user.solvedStats[diffKey] += 1;
+        } else {
+            user.solvedStats[diffKey] = 1;
+        }
+
+        user.totalSolved = (user.totalSolved || 0) + 1;
+        user.markModified('solvedStats');
     }
+
+    // 4. Award Badges
+    checkAndAwardBadges(user);
 };
 
 // ... (existing code from getUserProfile down to just before getExams or the end) ...
@@ -268,9 +306,11 @@ const getUserProfile = async (req, res) => {
         res.json({
             name: user.name,
             email: user.email,
+            role: user.role,
             selectedDomain: user.selectedDomain || null,
-            isPro: hasProAccess,
-            hasProAccess: hasProAccess,
+            isPremium: user.isPremium || false,
+            isPro: hasProAccess || user.isPremium,
+            hasProAccess: hasProAccess || user.isPremium,
             proExpiry: user.proExpiry,
             freeAiInterviewCount: user.freeAiInterviewCount,
             unlockedTutorials: validTutorials,
@@ -384,7 +424,7 @@ const submitExam = async (req, res) => {
         return res.status(503).json({ message: 'Database Connection Issue. Exam submission failed.' });
     }
     try {
-        const { examName, answers, language } = req.body;
+        const { examName, answers, language, isRun } = req.body;
         const userId = req.user.id;
         const user = await User.findById(userId);
 
@@ -410,6 +450,7 @@ const submitExam = async (req, res) => {
                 _id: topic._id,
                 title: topic.title,
                 subject: subject, // Add subject to the object
+                difficulty: topic.difficulty, // Add difficulty
                 domainId: { name: topic.subject || 'Programming' },
                 questions: [{
                     questionText: topic.content?.problemStatement || topic.content?.description || topic.title,
@@ -497,20 +538,22 @@ const submitExam = async (req, res) => {
             }
         };
 
-        user.progress.examScores.push(newAttempt);
+        if (!isRun) {
+            user.progress.examScores.push(newAttempt);
 
-        // Determine if this is a DSA submission for streak purposes
-        const isDSA = isTopic ? (exam.subject === 'DSA') : (exam.type === 'Topic-wise');
+            // Determine if this is a DSA submission for streak purposes
+            const isDSA = isTopic ? (exam.subject === 'DSA') : (exam.type === 'Topic-wise');
 
-        await updateUserStats(user, passed, newAttempt.difficulty, newAttempt.language, newAttempt.tags, isDSA);
-        await user.save();
+            await updateUserStats(user, passed, newAttempt.difficulty, newAttempt.language, newAttempt.tags, isDSA);
+            await user.save();
 
-        // Atomically increment the real acceptance rate counters
-        const counterUpdate = { $inc: { totalAttempts: 1, ...(passed && { totalPassed: 1 }) } };
-        if (isTopic && sourceTopicId) {
-            await Topic.findByIdAndUpdate(sourceTopicId, counterUpdate);
-        } else if (!isTopic && sourceExamId) {
-            await Exam.findByIdAndUpdate(sourceExamId, counterUpdate);
+            // Atomically increment the real acceptance rate counters
+            const counterUpdate = { $inc: { totalAttempts: 1, ...(passed && { totalPassed: 1 }) } };
+            if (isTopic && sourceTopicId) {
+                await Topic.findByIdAndUpdate(sourceTopicId, counterUpdate);
+            } else if (!isTopic && sourceExamId) {
+                await Exam.findByIdAndUpdate(sourceExamId, counterUpdate);
+            }
         }
 
         res.json({
@@ -737,7 +780,9 @@ const getMockSet = async (req, res) => {
             starterCode: q.content?.starterCode || "// Start coding here",
             starterCodes: q.content?.starterCodes,
             testCases: q.content?.testCases,
-            difficulty: q.content?.difficulty || q.difficulty
+            difficulty: q.content?.difficulty || q.difficulty,
+            constraints: q.content?.constraints,
+            hints: q.content?.keyPoints || q.content?.hints || []
         }));
 
         res.json(selected);

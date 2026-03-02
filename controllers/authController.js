@@ -31,7 +31,7 @@ const registerUser = async (req, res) => {
 
         if (user) {
             const now = new Date();
-            const hasProAccess = user.proExpiry && user.proExpiry > now;
+            const hasProAccess = user.isPremium || (user.proExpiry && user.proExpiry > now);
             const validTutorials = user.unlockedTutorials ? user.unlockedTutorials.filter(t => t.expiry && t.expiry > now).map(t => t.tutorialId) : [];
 
             res.status(201).json({
@@ -42,6 +42,7 @@ const registerUser = async (req, res) => {
                 selectedDomain: user.selectedDomain,
                 isPro: hasProAccess,
                 hasProAccess: hasProAccess,
+                isPremium: user.isPremium,
                 proExpiry: user.proExpiry,
                 freeAiInterviewCount: user.freeAiInterviewCount,
                 unlockedTutorials: validTutorials,
@@ -67,7 +68,7 @@ const loginUser = async (req, res) => {
 
         if (user && user.password && typeof user.password === 'string' && typeof password === 'string' && (await bcrypt.compare(password, user.password))) {
             const now = new Date();
-            const hasProAccess = user.proExpiry && user.proExpiry > now;
+            const hasProAccess = user.isPremium || (user.proExpiry && user.proExpiry > now);
             const validTutorials = user.unlockedTutorials ? user.unlockedTutorials.filter(t => t.expiry && t.expiry > now).map(t => t.tutorialId) : [];
 
             res.json({
@@ -78,6 +79,7 @@ const loginUser = async (req, res) => {
                 selectedDomain: user.selectedDomain,
                 isPro: hasProAccess,
                 hasProAccess: hasProAccess,
+                isPremium: user.isPremium,
                 proExpiry: user.proExpiry,
                 freeAiInterviewCount: user.freeAiInterviewCount,
                 unlockedTutorials: validTutorials,
@@ -116,7 +118,7 @@ const googleLogin = async (req, res) => {
         }
 
         const now = new Date();
-        const hasProAccess = user.proExpiry && user.proExpiry > now;
+        const hasProAccess = user.isPremium || (user.proExpiry && user.proExpiry > now);
         const validTutorials = user.unlockedTutorials ? user.unlockedTutorials.filter(t => t.expiry && t.expiry > now).map(t => t.tutorialId) : [];
 
         res.status(200).json({
@@ -127,6 +129,7 @@ const googleLogin = async (req, res) => {
             selectedDomain: user.selectedDomain,
             isPro: hasProAccess,
             hasProAccess: hasProAccess,
+            isPremium: user.isPremium,
             proExpiry: user.proExpiry,
             freeAiInterviewCount: user.freeAiInterviewCount,
             unlockedTutorials: validTutorials,

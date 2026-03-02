@@ -6,6 +6,7 @@ const {
     addTopic, updateTopic, deleteTopic,
     getCoreCSTopics, getTopicsByDomain,
     getUsers, toggleAdminRole, deleteUser,
+    addUser, togglePremiumStatus,
     getExams, addExam, updateExam, deleteExam,
     getDashboardStats
 } = require('../controllers/adminController');
@@ -46,7 +47,9 @@ router.get('/corecs', getCoreCSTopics);
 
 // User Management Routes
 router.get('/users', getUsers);
+router.post('/users', addUser);
 router.put('/users/role/:id', toggleAdminRole);
+router.put('/users/premium/:id', togglePremiumStatus);
 router.delete('/users/:id', deleteUser);
 
 // Exam Management Routes

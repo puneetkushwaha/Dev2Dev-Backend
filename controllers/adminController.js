@@ -154,6 +154,54 @@ const deleteUser = async (req, res) => {
     }
 };
 
+const bcrypt = require('bcryptjs');
+
+const addUser = async (req, res) => {
+    try {
+        const { name, email, password, isPremium } = req.body;
+
+        const userExists = await User.findOne({ email });
+        if (userExists) return res.status(400).json({ message: 'User with this email already exists' });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const user = new User({
+            name,
+            email,
+            password: hashedPassword,
+            isPremium: !!isPremium
+        });
+
+        await user.save();
+        res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isPremium: user.isPremium
+        });
+    } catch (error) {
+        console.error("Add User Error:", error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+const togglePremiumStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.isPremium = !user.isPremium;
+        await user.save();
+        res.json({ message: `Premium status updated to ${user.isPremium}`, isPremium: user.isPremium });
+    } catch (error) {
+        console.error("Toggle Premium Error:", error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 // --- Exam Management ---
 
 const getExams = async (req, res) => {
@@ -229,6 +277,7 @@ module.exports = {
     addTopic, updateTopic, deleteTopic,
     getCoreCSTopics, getTopicsByDomain,
     getUsers, toggleAdminRole, deleteUser,
+    addUser, togglePremiumStatus,
     getExams, addExam, updateExam, deleteExam,
     getDashboardStats
 };
