@@ -14,7 +14,7 @@ const FormData = require('form-data');
 const AI_BASE_URL = (process.env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 // Helper to update User Stats (Streak, Heatmap, Difficulty counts)
-const updateUserStats = async (user, isPassed, difficulty, language, tags) => {
+const updateUserStats = async (user, isPassed, difficulty, language, tags, isDSA = false) => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
 
@@ -25,23 +25,25 @@ const updateUserStats = async (user, isPassed, difficulty, language, tags) => {
     const todayCount = user.submissionHeatmap.get(today) || 0;
     user.submissionHeatmap.set(today, todayCount + 1);
 
-    // 2. Update Streak
-    if (user.lastSubmissionDate) {
-        const lastDate = new Date(user.lastSubmissionDate).toISOString().split('T')[0];
-        const yesterday = new Date(now);
-        yesterday.setDate(now.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+    // 2. Update Streak (ONLY for DSA questions)
+    if (isDSA) {
+        if (user.lastSubmissionDate) {
+            const lastDate = new Date(user.lastSubmissionDate).toISOString().split('T')[0];
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-        if (lastDate === yesterdayStr) {
-            user.streak += 1;
-        } else if (lastDate !== today) {
-            // Only reset if they missed a day. If they already submitted today, keep streak.
+            if (lastDate === yesterdayStr) {
+                user.streak += 1;
+            } else if (lastDate !== today) {
+                // Only reset if they missed a day. If they already submitted today, keep streak.
+                user.streak = 1;
+            }
+        } else {
             user.streak = 1;
         }
-    } else {
-        user.streak = 1;
+        user.lastSubmissionDate = now;
     }
-    user.lastSubmissionDate = now;
 
     // 3. Update Solved Stats if passed
     if (isPassed && difficulty) {
@@ -144,7 +146,8 @@ const submitMock = async (req, res) => {
 
         if (!isRun) {
             user.progress.examScores.push(newAttempt);
-            await updateUserStats(user, passed, 'Hard', language || 'javascript', ['Interview', 'Full Mock']);
+            // Mocks are NOT counted for streaks (isDSA = false)
+            await updateUserStats(user, passed, 'Hard', language || 'javascript', ['Interview', 'Full Mock'], false);
             await user.save();
 
             await MockStat.findOneAndUpdate(
@@ -402,9 +405,11 @@ const submitExam = async (req, res) => {
             }
             isTopic = true;
             sourceTopicId = topic._id;
+            const subject = topic.subject; // Keep track of subject for streak
             exam = {
                 _id: topic._id,
                 title: topic.title,
+                subject: subject, // Add subject to the object
                 domainId: { name: topic.subject || 'Programming' },
                 questions: [{
                     questionText: topic.content?.problemStatement || topic.content?.description || topic.title,
@@ -493,7 +498,11 @@ const submitExam = async (req, res) => {
         };
 
         user.progress.examScores.push(newAttempt);
-        await updateUserStats(user, passed, newAttempt.difficulty, newAttempt.language, newAttempt.tags);
+
+        // Determine if this is a DSA submission for streak purposes
+        const isDSA = isTopic ? (exam.subject === 'DSA') : (exam.type === 'Topic-wise');
+
+        await updateUserStats(user, passed, newAttempt.difficulty, newAttempt.language, newAttempt.tags, isDSA);
         await user.save();
 
         // Atomically increment the real acceptance rate counters
