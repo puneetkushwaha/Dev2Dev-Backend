@@ -18,21 +18,33 @@ const getTutorialById = async (req, res) => {
         const tutorial = await Tutorial.findById(req.params.id);
         if (!tutorial) return res.status(404).json({ message: 'Tutorial not found' });
 
-        // Access Control: Check if tutorial is premium
-        if (tutorial.isPremium) {
-            if (!req.user) return res.status(401).json({ message: 'Login required for premium tutorials' });
+        let hasFullAccess = false;
+
+        // Access Control Logic
+        if (!tutorial.isPremium) {
+            hasFullAccess = true;
+        } else if (req.user) {
             const user = await User.findById(req.user.id);
-            if (!user) return res.status(401).json({ message: 'User not found' });
+            if (user) {
+                const now = new Date();
+                const isPro = (user.proExpiry && user.proExpiry > now) || user.isPremium === true;
+                const isPurchased = user.unlockedTutorials && user.unlockedTutorials.some(t =>
+                    t.tutorialId?.toString() === tutorial._id.toString() && (!t.expiry || t.expiry > now)
+                );
 
-            const now = new Date();
-            const hasProAccess = user.proExpiry && user.proExpiry > now;
-            const hasPurchased = user.unlockedTutorials && user.unlockedTutorials.some(t =>
-                t.tutorialId?.toString() === tutorial._id.toString() && t.expiry > now
-            );
-
-            if (user.role !== 'admin' && !hasProAccess && !hasPurchased) {
-                return res.status(403).json({ message: 'Access denied. Premium tutorial requires Pro membership or purchase.' });
+                if (user.role === 'admin' || isPro || isPurchased) {
+                    hasFullAccess = true;
+                }
             }
+        }
+
+        // Strip ytId if user doesn't have full access
+        if (!hasFullAccess) {
+            const sanitizedLessons = tutorial.lessons.map(lesson => {
+                const { ytId, ...rest } = lesson.toObject();
+                return rest;
+            });
+            tutorial.lessons = sanitizedLessons;
         }
 
         res.json(tutorial);
