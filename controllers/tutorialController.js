@@ -20,7 +20,6 @@ const getTutorialById = async (req, res) => {
 
         let hasFullAccess = false;
 
-        // Access Control Logic
         if (!tutorial.isPremium) {
             hasFullAccess = true;
         } else if (req.user) {
@@ -31,14 +30,12 @@ const getTutorialById = async (req, res) => {
                 const isPurchased = user.unlockedTutorials && user.unlockedTutorials.some(t =>
                     t.tutorialId?.toString() === tutorial._id.toString() && (!t.expiry || t.expiry > now)
                 );
-
                 if (user.role === 'admin' || isPro || isPurchased) {
                     hasFullAccess = true;
                 }
             }
         }
 
-        // Strip ytId if user doesn't have full access
         if (!hasFullAccess) {
             const sanitizedLessons = tutorial.lessons.map(lesson => {
                 const { ytId, ...rest } = lesson.toObject();
@@ -50,6 +47,105 @@ const getTutorialById = async (req, res) => {
         res.json(tutorial);
     } catch (error) {
         console.error('Fetch Tutorial Error:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+// GET /api/tutorials/:id/progress
+// Returns which lessons the authenticated user has completed for a tutorial
+const getTutorialProgress = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('tutorialProgress earnedCertificates');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const tutorialId = req.params.id;
+        const progress = user.tutorialProgress.find(
+            p => p.tutorialId?.toString() === tutorialId
+        );
+
+        const alreadyCertified = user.earnedCertificates.some(
+            c => c.tutorialId?.toString() === tutorialId
+        );
+
+        res.json({
+            completedLessonIds: progress ? progress.completedLessonIds : [],
+            isCompleted: progress ? !!progress.completedAt : false,
+            alreadyCertified
+        });
+    } catch (error) {
+        console.error('Get Tutorial Progress Error:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+// POST /api/tutorials/:id/complete-lesson
+// Body: { lessonId }
+// Marks a lesson as watched. When all lessons are done, awards the certificate.
+const markLessonComplete = async (req, res) => {
+    try {
+        const { lessonId } = req.body;
+        if (!lessonId) return res.status(400).json({ message: 'lessonId is required' });
+
+        const tutorialId = req.params.id;
+
+        // Fetch the tutorial to know total lesson count
+        const tutorial = await Tutorial.findById(tutorialId).select('lessons title');
+        if (!tutorial) return res.status(404).json({ message: 'Tutorial not found' });
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Find or create the progress entry for this tutorial
+        let progressEntry = user.tutorialProgress.find(
+            p => p.tutorialId?.toString() === tutorialId
+        );
+
+        if (!progressEntry) {
+            user.tutorialProgress.push({ tutorialId, completedLessonIds: [], completedAt: null });
+            progressEntry = user.tutorialProgress[user.tutorialProgress.length - 1];
+        }
+
+        // Add lessonId if not already there
+        if (!progressEntry.completedLessonIds.includes(lessonId)) {
+            progressEntry.completedLessonIds.push(lessonId);
+        }
+
+        const totalLessons = tutorial.lessons.length;
+        const completedCount = progressEntry.completedLessonIds.length;
+        const allDone = completedCount >= totalLessons;
+        let justCompleted = false;
+
+        // If all lessons done and not already marked as completed
+        if (allDone && !progressEntry.completedAt) {
+            progressEntry.completedAt = new Date();
+            justCompleted = true;
+
+            // Award certificate if not already given
+            const alreadyCertified = user.earnedCertificates.some(
+                c => c.tutorialId?.toString() === tutorialId
+            );
+            if (!alreadyCertified) {
+                user.earnedCertificates.push({
+                    tutorialId,
+                    tutorialTitle: tutorial.title,
+                    earnedAt: new Date()
+                });
+            }
+        }
+
+        user.markModified('tutorialProgress');
+        user.markModified('earnedCertificates');
+        await user.save();
+
+        res.json({
+            completedLessonIds: progressEntry.completedLessonIds,
+            isCompleted: allDone,
+            justCompleted,
+            totalLessons,
+            completedCount
+        });
+    } catch (error) {
+        console.error('Mark Lesson Complete Error:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -91,6 +187,8 @@ const deleteTutorial = async (req, res) => {
 module.exports = {
     getTutorials,
     getTutorialById,
+    getTutorialProgress,
+    markLessonComplete,
     addTutorial,
     updateTutorial,
     deleteTutorial

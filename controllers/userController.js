@@ -52,8 +52,8 @@ const updateUserStats = async (user, isPassed, difficulty, language, tags, isDSA
     const todayCount = user.submissionHeatmap.get(today) || 0;
     user.submissionHeatmap.set(today, todayCount + 1);
 
-    // 2. Update Streak (ONLY for DSA questions)
-    if (isDSA) {
+    // 2. Update Streak — ONLY when a DSA problem is actually SOLVED (passed)
+    if (isDSA && isPassed) {
         if (user.lastSubmissionDate) {
             const lastDate = new Date(user.lastSubmissionDate).toISOString().split('T')[0];
             const yesterday = new Date(now);
@@ -61,19 +61,22 @@ const updateUserStats = async (user, isPassed, difficulty, language, tags, isDSA
             const yesterdayStr = yesterday.toISOString().split('T')[0];
 
             if (lastDate === yesterdayStr) {
+                // Solved yesterday → extend streak
                 user.streak += 1;
             } else if (lastDate !== today) {
-                // Only reset if they missed a day. If they already submitted today, keep streak.
+                // Missed a day → reset to 1
                 user.streak = 1;
             }
+            // If lastDate === today → already solved today, keep streak as-is (no change)
         } else {
+            // First ever solve
             user.streak = 1;
         }
         user.lastSubmissionDate = now;
     }
 
-    // 3. Update Solved Stats if passed
-    if (isPassed && difficulty) {
+    // 3. Update Solved Stats if passed — ONLY for DSA questions
+    if (isPassed && isDSA && difficulty) {
         const diffKey = difficulty.toLowerCase(); // easy, medium, hard
 
         if (!user.solvedStats) {
@@ -332,15 +335,25 @@ const getUserProfile = async (req, res) => {
             completedTopics: user.progress.completedTopics,
             examScores: user.progress.examScores,
             aiRecommendation: user.aiRecommendation,
-            // LeetCode Stats
-            streak: user.streak || 0,
+            // LeetCode Stats — compute effective streak (expires if not active today or yesterday)
+            streak: (() => {
+                if (!user.streak || !user.lastSubmissionDate) return 0;
+                const now = new Date();
+                const today = now.toISOString().split('T')[0];
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+                const lastDate = new Date(user.lastSubmissionDate).toISOString().split('T')[0];
+                return (lastDate === today || lastDate === yesterdayStr) ? user.streak : 0;
+            })(),
             solvedStats,
             totalAvailableStats, // Backend counts
             languageStats,
             skillStats,
             activityHeatmap,
             totalPoints, // Return total points
-            lastSubmissionDate: user.lastSubmissionDate
+            lastSubmissionDate: user.lastSubmissionDate,
+            earnedCertificates: user.earnedCertificates || []
         });
 
     } catch (error) {

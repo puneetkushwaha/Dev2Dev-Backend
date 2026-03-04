@@ -22,19 +22,19 @@ const UserSchema = new mongoose.Schema({
         leetcode: { type: String, default: 'N/A' }
     },
 
-    education: { type: String }, // e.g. "B.Tech Computer Science" 
-    experience: { type: String }, // e.g. "Fresher", "1-3 years"
-    skills: { type: [String] }, // e.g. ["JavaScript", "Python", "React"]
+    education: { type: String },
+    experience: { type: String },
+    skills: { type: [String] },
     selectedDomain: { type: String, default: null },
     aiRecommendation: { type: Object, default: null },
 
     // Premium Features
-    proExpiry: { type: Date, default: null }, // For interview prep Pro access valid until this date
+    proExpiry: { type: Date, default: null },
     unlockedTutorials: [{
         tutorialId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tutorial' },
         expiry: { type: Date }
-    }], // specific purchased tutorials with expiration
-    freeAiInterviewCount: { type: Number, default: 0 }, // Tracks free AI mock interviews (max 3)
+    }],
+    freeAiInterviewCount: { type: Number, default: 0 },
 
     // LeetCode-style Stats
     streak: { type: Number, default: 0 },
@@ -45,15 +45,29 @@ const UserSchema = new mongoose.Schema({
         medium: { type: Number, default: 0 },
         hard: { type: Number, default: 0 }
     },
-    totalSolved: { type: Number, default: 0 }, // Track total accepted DSA problems
-    isPremium: { type: Boolean, default: false }, // Manual VIP override for all features
+    totalSolved: { type: Number, default: 0 },
+    isPremium: { type: Boolean, default: false },
 
     // Achievements
     badges: [{
-        id: { type: String, required: true }, // e.g. 'streak_30', 'solver_100'
-        name: { type: String, required: true }, // 'Monthly Master', 'Knight'
-        icon: { type: String, required: true }, // 'Flame', 'Swords', etc (can be icon names for Lucide)
+        id: { type: String, required: true },
+        name: { type: String, required: true },
+        icon: { type: String, required: true },
         description: { type: String },
+        earnedAt: { type: Date, default: Date.now }
+    }],
+
+    // Tutorial Course Progress (per-lesson completion tracking)
+    tutorialProgress: [{
+        tutorialId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tutorial' },
+        completedLessonIds: [{ type: String }],
+        completedAt: { type: Date, default: null }
+    }],
+
+    // Certificates earned by completing tutorials (for profile display)
+    earnedCertificates: [{
+        tutorialId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tutorial' },
+        tutorialTitle: { type: String },
         earnedAt: { type: Date, default: Date.now }
     }],
 
@@ -84,7 +98,7 @@ const UserSchema = new mongoose.Schema({
                     userAnswer: String,
                     aiFeedback: String,
                     isCorrect: Boolean,
-                    score: Number // Score for this specific coding question
+                    score: Number
                 }]
             }
         }],
