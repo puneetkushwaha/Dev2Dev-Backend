@@ -84,6 +84,7 @@ const UserSchema = new mongoose.Schema({
             difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], default: 'Medium' },
             language: { type: String, default: 'javascript' },
             tags: [{ type: String }],
+            isDSA: { type: Boolean, default: false },
             dateRun: { type: Date, default: Date.now },
             detailedAnalysis: {
                 mcqResults: [{

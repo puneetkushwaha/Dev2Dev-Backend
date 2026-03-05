@@ -176,6 +176,7 @@ const submitMock = async (req, res) => {
             mcqScore: 0,
             codingScore: codingScore,
             passed: passed,
+            isDSA: false,
             difficulty: 'Hard', // Mock interviews are typically hard
             language: language || 'javascript',
             tags: ['Interview', 'Full Mock'],
@@ -542,6 +543,7 @@ const submitExam = async (req, res) => {
             mcqScore,
             codingScore,
             passed,
+            isDSA: isTopic,
             difficulty: isTopic ? (exam.difficulty || 'Medium') : (exam.questions[0]?.difficulty || 'Medium'),
             language: language || 'javascript',
             tags: exam.tags || [],
