@@ -13,6 +13,7 @@ const tutorialRoutes = require('./routes/tutorial');
 const notificationRoutes = require('./routes/notification');
 const paymentRoutes = require('./routes/payment');
 const leaderboardRoutes = require('./routes/leaderboard');
+const contestRoutes = require('./routes/contestRoutes');
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Render load balancer)
@@ -81,6 +82,7 @@ app.use('/api/tutorials', tutorialRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/contests', contestRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
