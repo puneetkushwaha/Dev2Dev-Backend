@@ -1,47 +1,26 @@
-const nodemailer = require('nodemailer');
-const dns = require('dns');
+const { Resend } = require('resend');
 
-// Force IPv4 resolution to prevent ENETUNREACH on environments without proper IPv6 routing
-dns.setDefaultResultOrder('ipv4first');
-
-/**
- * Get shared transporter configuration
- */
-const getTransporter = () => {
-    const transporterConfig = {
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.EMAIL_PORT) || 587,
-        secure: process.env.EMAIL_PORT == 465,
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS?.replace(/\s+/g, ''), // Remove any accidental spaces
-        },
-        tls: {
-            rejectUnauthorized: false
-        },
-        connectionTimeout: 10000, // 10 seconds timeout instead of infinite hang
-        greetingTimeout: 10000,
-        socketTimeout: 10000
-    };
-
-    if (transporterConfig.host.includes('gmail')) {
-        transporterConfig.service = 'gmail';
-    }
-
-    return nodemailer.createTransport(transporterConfig);
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
+const fromEmail = process.env.FROM_EMAIL || 'onboarding@dev2dev.online';
+const fromName = process.env.FROM_NAME || 'Dev2Dev';
+const fromString = `${fromName} <${fromEmail}>`;
 
 /**
- * Verify SMTP Configuration
+ * Verify Resend Configuration
  */
 const verifyConfig = async () => {
     try {
-        const transporter = getTransporter();
-        await transporter.verify();
+        if (!process.env.RESEND_API_KEY) {
+            return { success: false, error: 'RESEND_API_KEY is missing' };
+        }
+        // Send a test email to the configured sender address (or user's email if possible, but sender is safer for pure verification)
+        // Alternatively, since Resend doesn't have a direct "verify()" like nodemailer,
+        // we can just check if the API key is present as a basic check, or attempt a safe API call.
+        // For now, if the key is there, we assume it's configured. Real errors will happen during send.
         return { success: true };
     } catch (error) {
         console.error('[Email Verify Error]', error);
-        return { success: false, error: error.message, code: error.code };
+        return { success: false, error: error.message };
     }
 };
 
@@ -50,7 +29,6 @@ const verifyConfig = async () => {
  */
 const sendPaymentConfirmation = async (email, name, type, amount) => {
     try {
-        const transporter = getTransporter();
         const subject = type === 'pro'
             ? 'Welcome to Dev2Dev Pro! 🚀'
             : 'Payment Confirmed - Tutorial Unlocked! 📚';
@@ -77,18 +55,23 @@ const sendPaymentConfirmation = async (email, name, type, amount) => {
             </div>
         `;
 
-        await transporter.sendMail({
-            from: `"${process.env.FROM_NAME || 'Dev2Dev'}" <${process.env.FROM_EMAIL}>`,
+        const { data, error } = await resend.emails.send({
+            from: fromString,
             to: email,
             subject: subject,
             html: html,
         });
 
-        console.log(`[Email] Payment confirmation sent to ${email}`);
-        return { success: true };
+        if (error) {
+            console.error('[Resend Error] Failed to send confirmation:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`[Email] Payment confirmation sent to ${email} (ID: ${data.id})`);
+        return { success: true, data };
     } catch (error) {
-        console.error('[Email Error] Failed to send confirmation:', error);
-        return { success: false, error: error.message, code: error.code };
+        console.error('[Email Exception] Failed to send confirmation:', error);
+        return { success: false, error: error.message };
     }
 };
 
@@ -97,7 +80,6 @@ const sendPaymentConfirmation = async (email, name, type, amount) => {
  */
 const sendPremiumStatusChange = async (email, name, isActive) => {
     try {
-        const transporter = getTransporter();
         const subject = isActive 
             ? 'Access Granted: Welcome to Dev2Dev Pro! 🌟' 
             : 'Dev2Dev Pro Subscription Update ℹ️';
@@ -135,18 +117,23 @@ const sendPremiumStatusChange = async (email, name, isActive) => {
             </div>
         `;
 
-        await transporter.sendMail({
-            from: `"${process.env.FROM_NAME || 'Dev2Dev'}" <${process.env.FROM_EMAIL}>`,
+        const { data, error } = await resend.emails.send({
+            from: fromString,
             to: email,
             subject: subject,
             html: html,
         });
 
-        console.log(`[Email] Status change notification sent to ${email} (Active: ${isActive})`);
-        return { success: true };
+        if (error) {
+            console.error('[Resend Error] Failed to send status change:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`[Email] Status change notification sent to ${email} (Active: ${isActive}, ID: ${data.id})`);
+        return { success: true, data };
     } catch (error) {
-        console.error('[Email Error] Failed to send status change:', error);
-        return { success: false, error: error.message, code: error.code };
+        console.error('[Email Exception] Failed to send status change:', error);
+        return { success: false, error: error.message };
     }
 };
 
@@ -155,7 +142,6 @@ const sendPremiumStatusChange = async (email, name, isActive) => {
  */
 const sendPremiumExpiryWarning = async (email, name, daysLeft) => {
     try {
-        const transporter = getTransporter();
         const html = `
             <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #fee2e2; border-radius: 20px; background: #fffafb;">
                 <h2 style="color: #dc2626;">Your Pro Access is Expiring Soon! ⚠️</h2>
@@ -169,18 +155,23 @@ const sendPremiumExpiryWarning = async (email, name, daysLeft) => {
             </div>
         `;
 
-        await transporter.sendMail({
-            from: `"${process.env.FROM_NAME || 'Dev2Dev'}" <${process.env.FROM_EMAIL}>`,
+        const { data, error } = await resend.emails.send({
+            from: fromString,
             to: email,
             subject: 'Dev2Dev Pro: Expiry Warning ⚡',
             html: html,
         });
 
-        console.log(`[Email] Expiry warning sent to ${email}`);
-        return { success: true };
+        if (error) {
+            console.error('[Resend Error] Failed to send expiry warning:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`[Email] Expiry warning sent to ${email} (ID: ${data.id})`);
+        return { success: true, data };
     } catch (error) {
-        console.error('[Email Error] Failed to send expiry warning:', error);
-        return { success: false, error: error.message, code: error.code };
+        console.error('[Email Exception] Failed to send expiry warning:', error.message);
+        return { success: false, error: error.message };
     }
 };
 
@@ -190,4 +181,3 @@ module.exports = {
     sendPremiumExpiryWarning,
     verifyConfig 
 };
-
