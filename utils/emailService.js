@@ -1,4 +1,8 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+// Force IPv4 resolution to prevent ENETUNREACH on environments without proper IPv6 routing
+dns.setDefaultResultOrder('ipv4first');
 
 /**
  * Get shared transporter configuration
