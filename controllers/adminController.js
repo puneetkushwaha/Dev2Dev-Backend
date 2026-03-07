@@ -164,6 +164,7 @@ const addUser = async (req, res) => {
         if (userExists) return res.status(400).json({ message: 'User with this email already exists' });
 
         const salt = await bcrypt.genSalt(10);
+        const { sendPremiumStatusChange } = require('../utils/emailService');
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const user = new User({
@@ -174,6 +175,11 @@ const addUser = async (req, res) => {
         });
 
         await user.save();
+
+        // Automatically notify if premium
+        if (user.isPremium) {
+            sendPremiumStatusChange(user.email, user.name, true);
+        }
         res.status(201).json({
             _id: user._id,
             name: user.name,
@@ -193,8 +199,13 @@ const togglePremiumStatus = async (req, res) => {
         const user = await User.findById(id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
+        const { sendPremiumStatusChange } = require('../utils/emailService');
         user.isPremium = !user.isPremium;
         await user.save();
+        
+        // Automatically notify user
+        sendPremiumStatusChange(user.email, user.name, user.isPremium);
+
         res.json({ message: `Premium status updated to ${user.isPremium}`, isPremium: user.isPremium });
     } catch (error) {
         console.error("Toggle Premium Error:", error);
@@ -272,6 +283,40 @@ const getDashboardStats = async (req, res) => {
     }
 };
 
+const notifyAllPremium = async (req, res) => {
+    try {
+        const premiumUsers = await User.find({ isPremium: true });
+        const { sendPremiumStatusChange } = require('../utils/emailService');
+        
+        let sentCount = 0;
+        for (const user of premiumUsers) {
+            const sent = await sendPremiumStatusChange(user.email, user.name, true);
+            if (sent) sentCount++;
+        }
+
+        res.json({ message: `Notification sent to ${sentCount} premium users.` });
+    } catch (error) {
+        console.error("Notify All Premium Error:", error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+const resendPremiumEmail = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!user.isPremium) return res.status(400).json({ message: 'User is not a premium member.' });
+
+        const { sendPremiumStatusChange } = require('../utils/emailService');
+        await sendPremiumStatusChange(user.email, user.name, true);
+
+        res.json({ message: `Welcome email resent to ${user.name}` });
+    } catch (error) {
+        console.error("Resend Email Error:", error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
     addDomain, updateDomain, deleteDomain,
     addTopic, updateTopic, deleteTopic,
@@ -279,5 +324,5 @@ module.exports = {
     getUsers, toggleAdminRole, deleteUser,
     addUser, togglePremiumStatus,
     getExams, addExam, updateExam, deleteExam,
-    getDashboardStats
+    getDashboardStats, notifyAllPremium, resendPremiumEmail
 };

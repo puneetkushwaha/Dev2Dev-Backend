@@ -8,7 +8,7 @@ const {
     getUsers, toggleAdminRole, deleteUser,
     addUser, togglePremiumStatus,
     getExams, addExam, updateExam, deleteExam,
-    getDashboardStats
+    getDashboardStats, notifyAllPremium, resendPremiumEmail
 } = require('../controllers/adminController');
 const {
     getTutorials, addTutorial, updateTutorial, deleteTutorial
@@ -50,6 +50,8 @@ router.get('/users', getUsers);
 router.post('/users', addUser);
 router.put('/users/role/:id', toggleAdminRole);
 router.put('/users/premium/:id', togglePremiumStatus);
+router.post('/users/notify-premium', notifyAllPremium);
+router.post('/users/resend-premium-email/:id', resendPremiumEmail);
 router.delete('/users/:id', deleteUser);
 
 // Exam Management Routes
