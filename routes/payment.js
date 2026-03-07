@@ -5,10 +5,20 @@ const Razorpay = require('razorpay');
 const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+let razorpay;
+try {
+    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+        razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+        console.log("✅ Razorpay initialized successfully");
+    } else {
+        console.warn("⚠️ Razorpay credentials missing. Payment features will be disabled.");
+    }
+} catch (error) {
+    console.error("❌ Razorpay initialization error:", error.message);
+}
 
 const PRICE_MAP = {
     'pro': 499,      // Hardcoded price for Pro
@@ -36,6 +46,10 @@ router.post('/create-order', protect, async (req, res) => {
             }
         };
 
+        if (!razorpay) {
+            return res.status(503).json({ message: "Payment service unavailable (Configuration missing)" });
+        }
+
         const order = await razorpay.orders.create(options);
 
         if (!order) {
@@ -56,6 +70,10 @@ router.post('/create-order', protect, async (req, res) => {
 router.post('/verify-payment', protect, async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, type, tutorialId } = req.body;
+
+        if (!process.env.RAZORPAY_KEY_SECRET) {
+            return res.status(503).json({ message: "Verification service unavailable" });
+        }
 
         const sign = razorpay_order_id + "|" + razorpay_payment_id;
         const expectedSign = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET).update(sign.toString()).digest("hex");

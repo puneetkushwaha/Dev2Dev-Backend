@@ -63,9 +63,6 @@ router.delete('/exams/:id', deleteExam);
 // Dashboard Stats Route
 router.get('/stats', getDashboardStats);
 
-// Dashboard Stats Route
-router.get('/stats', getDashboardStats);
-
 // Tutorial Management Routes
 router.get('/tutorials', getTutorials);
 router.post('/tutorials', addTutorial);
