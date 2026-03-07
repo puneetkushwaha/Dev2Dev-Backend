@@ -213,7 +213,11 @@ const togglePremiumStatus = async (req, res) => {
                 console.error(`[Background Email Error] ${user.email}: ${res.error} (${res.code})`);
             }
         });
-        
+        const responseData = { 
+            message: `Premium status updated to ${user.isPremium}`, 
+            isPremium: user.isPremium 
+        };
+
         res.json(responseData);
     } catch (error) {
         console.error("Toggle Premium Error:", error);
