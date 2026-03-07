@@ -69,10 +69,10 @@ const sendPaymentConfirmation = async (email, name, type, amount) => {
         });
 
         console.log(`[Email] Payment confirmation sent to ${email}`);
-        return true;
+        return { success: true };
     } catch (error) {
-        console.error('[Email Error] Failed to send confirmation:', error.message);
-        return false;
+        console.error('[Email Error] Failed to send confirmation:', error);
+        return { success: false, error: error.message, code: error.code };
     }
 };
 
@@ -148,10 +148,10 @@ const sendPremiumStatusChange = async (email, name, isActive) => {
         });
 
         console.log(`[Email] Status change notification sent to ${email} (Active: ${isActive})`);
-        return true;
+        return { success: true };
     } catch (error) {
-        console.error('[Email Error] Failed to send status change:', error.message);
-        return false;
+        console.error('[Email Error] Failed to send status change:', error);
+        return { success: false, error: error.message, code: error.code };
     }
 };
 
@@ -202,10 +202,11 @@ const sendPremiumExpiryWarning = async (email, name, daysLeft) => {
             html: html,
         });
 
-        return true;
+        console.log(`[Email] Expiry warning sent to ${email}`);
+        return { success: true };
     } catch (error) {
-        console.error('[Email Error] Failed to send expiry warning:', error.message);
-        return false;
+        console.error('[Email Error] Failed to send expiry warning:', error);
+        return { success: false, error: error.message, code: error.code };
     }
 };
 

@@ -204,9 +204,19 @@ const togglePremiumStatus = async (req, res) => {
         await user.save();
         
         // Automatically notify user
-        sendPremiumStatusChange(user.email, user.name, user.isPremium);
+        const mailRes = await sendPremiumStatusChange(user.email, user.name, user.isPremium);
+        
+        const responseData = { 
+            message: `Premium status updated to ${user.isPremium}`, 
+            isPremium: user.isPremium 
+        };
 
-        res.json({ message: `Premium status updated to ${user.isPremium}`, isPremium: user.isPremium });
+        if (!mailRes.success) {
+            responseData.emailError = mailRes.error;
+            responseData.emailCode = mailRes.code;
+        }
+
+        res.json(responseData);
     } catch (error) {
         console.error("Toggle Premium Error:", error);
         res.status(500).json({ message: 'Internal Server Error' });
@@ -289,13 +299,22 @@ const notifyAllPremium = async (req, res) => {
         const { sendPremiumStatusChange } = require('../utils/emailService');
         
         let sentCount = 0;
+        let errors = [];
+        
         for (const user of premiumUsers) {
-            const sent = await sendPremiumStatusChange(user.email, user.name, true);
-            if (sent) sentCount++;
+            const mailRes = await sendPremiumStatusChange(user.email, user.name, true);
+            if (mailRes.success) {
+                sentCount++;
+            } else {
+                errors.push(`${user.email}: ${mailRes.error}`);
+            }
         }
 
-        res.json({ message: `Notification sent to ${sentCount} premium users.` });
-    } catch (error) {
+        res.json({ 
+            message: `Notification sent to ${sentCount} users.${errors.length > 0 ? ` Errors: ${errors.length}` : ''}`,
+            errors: errors.slice(0, 5) // Send some errors back for debugging
+        });
+   } catch (error) {
         console.error("Notify All Premium Error:", error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
@@ -308,9 +327,16 @@ const resendPremiumEmail = async (req, res) => {
         if (!user.isPremium) return res.status(400).json({ message: 'User is not a premium member.' });
 
         const { sendPremiumStatusChange } = require('../utils/emailService');
-        await sendPremiumStatusChange(user.email, user.name, true);
+        const mailRes = await sendPremiumStatusChange(user.email, user.name, true);
 
-        res.json({ message: `Welcome email resent to ${user.name}` });
+        if (mailRes.success) {
+            res.json({ message: `Welcome email resent to ${user.name}` });
+        } else {
+            res.status(500).json({ 
+                message: `Email failed: ${mailRes.error}`,
+                code: mailRes.code
+            });
+        }
     } catch (error) {
         console.error("Resend Email Error:", error);
         res.status(500).json({ message: 'Internal Server Error' });

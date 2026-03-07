@@ -113,6 +113,8 @@ connectDB();
 // Start Server
 const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📧 Email Service: ${process.env.EMAIL_USER ? 'Configured (' + process.env.EMAIL_USER + ')' : 'MISSING'}`);
+    console.log(`💳 Razorpay: ${process.env.RAZORPAY_KEY_ID ? 'Configured' : 'MISSING'}`);
 });
 
 // Global Error Handler
