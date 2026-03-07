@@ -56,7 +56,7 @@ const sendPaymentConfirmation = async (email, name, type, amount) => {
         `;
 
         const { data, error } = await resend.emails.send({
-            from: fromString,
+            from: `${fromName} <billing@dev2dev.online>`,
             to: email,
             subject: subject,
             html: html,
@@ -118,7 +118,7 @@ const sendPremiumStatusChange = async (email, name, isActive) => {
         `;
 
         const { data, error } = await resend.emails.send({
-            from: fromString,
+            from: `${fromName} <support@dev2dev.online>`,
             to: email,
             subject: subject,
             html: html,
@@ -156,7 +156,7 @@ const sendPremiumExpiryWarning = async (email, name, daysLeft) => {
         `;
 
         const { data, error } = await resend.emails.send({
-            from: fromString,
+            from: `${fromName} <alerts@dev2dev.online>`,
             to: email,
             subject: 'Dev2Dev Pro: Expiry Warning ⚡',
             html: html,
