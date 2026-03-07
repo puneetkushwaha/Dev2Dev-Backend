@@ -366,5 +366,6 @@ module.exports = {
     getUsers, toggleAdminRole, deleteUser,
     addUser, togglePremiumStatus,
     getExams, addExam, updateExam, deleteExam,
-    getDashboardStats, notifyAllPremium, resendPremiumEmail
+    getDashboardStats, notifyAllPremium, resendPremiumEmail,
+    verifyEmailConfig
 };
