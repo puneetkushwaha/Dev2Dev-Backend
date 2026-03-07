@@ -38,6 +38,13 @@ const ContestSchema = new mongoose.Schema({
         }]
     }],
     isActive: { type: Boolean, default: true },
+    contestType: { 
+        type: String, 
+        enum: ['daily', 'weekly', 'monthly', 'special'], 
+        default: 'special' 
+    },
+    tags: [{ type: String }], // e.g., 'Microsoft', 'Google'
+    image: { type: String }, // Company logo or thematic image
     createdAt: { type: Date, default: Date.now }
 });
 
