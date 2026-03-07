@@ -274,6 +274,20 @@ const Tutorial = require('../models/Tutorial');
 
 // --- Dashboard Stats ---
 
+const verifyEmailConfig = async (req, res) => {
+    const { verifyConfig } = require('../utils/emailService');
+    const result = await verifyConfig();
+    if (result.success) {
+        res.json({ message: 'SMTP Configuration is valid! ✅' });
+    } else {
+        res.status(500).json({ 
+            message: 'SMTP Configuration failed ❌', 
+            error: result.error,
+            code: result.code 
+        });
+    }
+};
+
 const getDashboardStats = async (req, res) => {
     try {
         const userCount = await User.countDocuments();

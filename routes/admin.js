@@ -8,7 +8,8 @@ const {
     getUsers, toggleAdminRole, deleteUser,
     addUser, togglePremiumStatus,
     getExams, addExam, updateExam, deleteExam,
-    getDashboardStats, notifyAllPremium, resendPremiumEmail
+    getDashboardStats, notifyAllPremium, resendPremiumEmail,
+    verifyEmailConfig
 } = require('../controllers/adminController');
 const {
     getTutorials, addTutorial, updateTutorial, deleteTutorial
@@ -61,6 +62,7 @@ router.put('/exams/:id', updateExam);
 router.delete('/exams/:id', deleteExam);
 
 // Dashboard Stats Route
+router.get('/verify-email-config', verifyEmailConfig);
 router.get('/stats', getDashboardStats);
 
 // Tutorial Management Routes

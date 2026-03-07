@@ -1,40 +1,49 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Send Payment Confirmation Email
- * @param {string} email - User email
- * @param {string} name - User name
- * @param {string} type - 'pro' or 'tutorial'
- * @param {number} amount - Amount paid
+ * Get shared transporter configuration
  */
+const getTransporter = () => {
+    const transporterConfig = {
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        secure: process.env.EMAIL_PORT == 465,
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS?.replace(/\s+/g, ''), // Remove any accidental spaces
+        },
+        tls: {
+            rejectUnauthorized: false
+        }
+    };
+
+    if (transporterConfig.host.includes('gmail')) {
+        transporterConfig.service = 'gmail';
+    }
+
+    return nodemailer.createTransport(transporterConfig);
+};
+
+/**
+ * Verify SMTP Configuration
+ */
+const verifyConfig = async () => {
+    try {
+        const transporter = getTransporter();
+        await transporter.verify();
+        return { success: true };
+    } catch (error) {
+        console.error('[Email Verify Error]', error);
+        return { success: false, error: error.message, code: error.code };
+    }
+};
+
 /**
  * Send Payment Confirmation Email
- * @param {string} email - User email
- * @param {string} name - User name
- * @param {string} type - 'pro' or 'tutorial'
- * @param {number} amount - Amount paid
  */
 const sendPaymentConfirmation = async (email, name, type, amount) => {
     try {
-        const transporterConfig = {
-            host: process.env.EMAIL_HOST,
-            port: parseInt(process.env.EMAIL_PORT) || 587,
-            secure: process.env.EMAIL_PORT == 465,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        };
-
-        if (process.env.EMAIL_HOST?.includes('gmail')) {
-            transporterConfig.service = 'gmail';
-        }
-
-        const transporter = nodemailer.createTransport(transporterConfig);
-
+        const transporter = getTransporter();
         const subject = type === 'pro'
             ? 'Welcome to Dev2Dev Pro! 🚀'
             : 'Payment Confirmed - Tutorial Unlocked! 📚';
@@ -78,31 +87,10 @@ const sendPaymentConfirmation = async (email, name, type, amount) => {
 
 /**
  * Send Premium Status Change Email
- * @param {string} email - User email
- * @param {string} name - User name
- * @param {boolean} isActive - New status
  */
 const sendPremiumStatusChange = async (email, name, isActive) => {
     try {
-        const transporterConfig = {
-            host: process.env.EMAIL_HOST,
-            port: parseInt(process.env.EMAIL_PORT) || 587,
-            secure: process.env.EMAIL_PORT == 465,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        };
-
-        if (process.env.EMAIL_HOST?.includes('gmail')) {
-            transporterConfig.service = 'gmail';
-        }
-
-        const transporter = nodemailer.createTransport(transporterConfig);
-
+        const transporter = getTransporter();
         const subject = isActive 
             ? 'Access Granted: Welcome to Dev2Dev Pro! 🌟' 
             : 'Dev2Dev Pro Subscription Update ℹ️';
@@ -157,31 +145,10 @@ const sendPremiumStatusChange = async (email, name, isActive) => {
 
 /**
  * Send Premium Expiry Warning
- * @param {string} email - User email
- * @param {string} name - User name
- * @param {number} daysLeft - Days until expiry
  */
 const sendPremiumExpiryWarning = async (email, name, daysLeft) => {
     try {
-        const transporterConfig = {
-            host: process.env.EMAIL_HOST,
-            port: parseInt(process.env.EMAIL_PORT) || 587,
-            secure: process.env.EMAIL_PORT == 465,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        };
-
-        if (process.env.EMAIL_HOST?.includes('gmail')) {
-            transporterConfig.service = 'gmail';
-        }
-
-        const transporter = nodemailer.createTransport(transporterConfig);
-
+        const transporter = getTransporter();
         const html = `
             <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #fee2e2; border-radius: 20px; background: #fffafb;">
                 <h2 style="color: #dc2626;">Your Pro Access is Expiring Soon! ⚠️</h2>
@@ -210,4 +177,10 @@ const sendPremiumExpiryWarning = async (email, name, daysLeft) => {
     }
 };
 
-module.exports = { sendPaymentConfirmation, sendPremiumStatusChange, sendPremiumExpiryWarning };
+module.exports = { 
+    sendPaymentConfirmation, 
+    sendPremiumStatusChange, 
+    sendPremiumExpiryWarning,
+    verifyConfig 
+};
+
