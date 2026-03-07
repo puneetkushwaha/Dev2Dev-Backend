@@ -18,7 +18,10 @@ const getTransporter = () => {
         },
         tls: {
             rejectUnauthorized: false
-        }
+        },
+        connectionTimeout: 10000, // 10 seconds timeout instead of infinite hang
+        greetingTimeout: 10000,
+        socketTimeout: 10000
     };
 
     if (transporterConfig.host.includes('gmail')) {
