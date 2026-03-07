@@ -11,6 +11,12 @@ const {
     getDashboardStats, notifyAllPremium, resendPremiumEmail,
     verifyEmailConfig
 } = require('../controllers/adminController');
+
+console.log('DEBUG: Admin Controllers Loaded:', {
+    getDashboardStats: typeof getDashboardStats,
+    verifyEmailConfig: typeof verifyEmailConfig,
+    resendPremiumEmail: typeof resendPremiumEmail
+});
 const {
     getTutorials, addTutorial, updateTutorial, deleteTutorial
 } = require('../controllers/tutorialController');
