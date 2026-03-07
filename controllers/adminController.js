@@ -278,9 +278,10 @@ const verifyEmailConfig = async (req, res) => {
     const { verifyConfig } = require('../utils/emailService');
     const result = await verifyConfig();
     if (result.success) {
-        res.json({ message: 'SMTP Configuration is valid! ✅' });
+        res.json({ success: true, message: 'SMTP Configuration is valid! ✅' });
     } else {
-        res.status(500).json({ 
+        res.json({ 
+            success: false,
             message: 'SMTP Configuration failed ❌', 
             error: result.error,
             code: result.code 
