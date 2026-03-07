@@ -176,9 +176,13 @@ const addUser = async (req, res) => {
 
         await user.save();
 
-        // Automatically notify if premium
+        await user.save();
+
+        // Automatically notify if premium (Non-blocking for faster UI)
         if (user.isPremium) {
-            sendPremiumStatusChange(user.email, user.name, true);
+            sendPremiumStatusChange(user.email, user.name, true).then(res => {
+                if (!res.success) console.error(`[Background Email Error] ${user.email}: ${res.error}`);
+            });
         }
         res.status(201).json({
             _id: user._id,
@@ -203,19 +207,13 @@ const togglePremiumStatus = async (req, res) => {
         user.isPremium = !user.isPremium;
         await user.save();
         
-        // Automatically notify user
-        const mailRes = await sendPremiumStatusChange(user.email, user.name, user.isPremium);
+        // Automatically notify user (Non-blocking to reach UI quickly)
+        sendPremiumStatusChange(user.email, user.name, user.isPremium).then(res => {
+            if (!res.success) {
+                console.error(`[Background Email Error] ${user.email}: ${res.error} (${res.code})`);
+            }
+        });
         
-        const responseData = { 
-            message: `Premium status updated to ${user.isPremium}`, 
-            isPremium: user.isPremium 
-        };
-
-        if (!mailRes.success) {
-            responseData.emailError = mailRes.error;
-            responseData.emailCode = mailRes.code;
-        }
-
         res.json(responseData);
     } catch (error) {
         console.error("Toggle Premium Error:", error);
