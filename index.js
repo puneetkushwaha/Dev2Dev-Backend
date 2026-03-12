@@ -16,6 +16,7 @@ const notificationRoutes = require('./routes/notification');
 const paymentRoutes = require('./routes/payment');
 const leaderboardRoutes = require('./routes/leaderboard');
 const contestRoutes = require('./routes/contestRoutes');
+const feedbackRoutes = require('./routes/feedback');
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Render load balancer)
@@ -86,6 +87,11 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/contests', contestRoutes);
+app.use('/api/feedback', feedbackRoutes);
+
+// Static files for uploads
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health Check
 app.get('/health', (req, res) => {
