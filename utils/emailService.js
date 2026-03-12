@@ -249,10 +249,107 @@ const sendWelcomeEmail = async (email, name) => {
     }
 };
 
+/**
+ * Send Feedback Received Email
+ */
+const sendFeedbackReceivedEmail = async (email, name, refNumber, description) => {
+    try {
+        const subject = `Feedback Received: ${refNumber} 📝`;
+        const html = `
+            <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: auto; padding: 40px; background-color: #050508; border-radius: 24px; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.08);">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #6366f1; margin: 0; font-size: 28px;">Dev2Dev</h1>
+                </div>
+                <h2 style="color: #ffffff; font-size: 22px;">Hi ${name},</h2>
+                <p style="color: #94a3b8; font-size: 16px; line-height: 1.6;">
+                    Thank you for your feedback! We've received your report and our team will review it shortly.
+                </p>
+                <div style="background: rgba(99, 102, 241, 0.1); padding: 25px; border-radius: 16px; margin: 30px 0; border: 1px solid rgba(99, 102, 241, 0.2);">
+                    <p style="margin: 0; color: #a5b4fc; font-size: 14px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Reference Number</p>
+                    <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 24px; font-weight: 800;">${refNumber}</p>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.02); padding: 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <p style="margin: 0; color: #64748b; font-size: 13px;">Your Report:</p>
+                    <p style="margin: 8px 0 0 0; color: #cbd5e1; font-size: 14px; font-style: italic;">"${description}"</p>
+                </div>
+                <p style="color: #94a3b8; margin-top: 30px;">You can track the status of this report on our dashboard using the reference number above.</p>
+                <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.06); margin: 40px 0;">
+                <p style="font-size: 12px; color: #475569; text-align: center;">&copy; 2026 Dev2Dev. Elevate your craft.</p>
+            </div>
+        `;
+
+        const { data, error } = await resend.emails.send({
+            from: `${fromName} <support@dev2dev.online>`,
+            to: email,
+            subject: subject,
+            html: html,
+        });
+
+        if (error) {
+            console.error('[Resend Error] Failed to send feedback confirmation:', error);
+            return { success: false, error: error.message };
+        }
+        return { success: true, data };
+    } catch (error) {
+        console.error('[Email Exception] Feedback confirmation failed:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+/**
+ * Send Feedback Resolved Email
+ */
+const sendFeedbackResolvedEmail = async (email, name, refNumber) => {
+    try {
+        const subject = `Issue Resolved: ${refNumber} ✅`;
+        const html = `
+            <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: auto; padding: 40px; background-color: #050508; border-radius: 24px; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.08);">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="background: rgba(52, 211, 153, 0.15); width: 60px; height: 60px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <span style="font-size: 30px;">✅</span>
+                    </div>
+                    <h1 style="color: #6366f1; margin: 0; font-size: 28px;">Dev2Dev</h1>
+                </div>
+                <h2 style="color: #ffffff; font-size: 22px;">Great news, ${name}!</h2>
+                <p style="color: #94a3b8; font-size: 16px; line-height: 1.6;">
+                    The issue you reported with reference number <strong>${refNumber}</strong> has been resolved by our team.
+                </p>
+                <div style="background: rgba(52, 211, 153, 0.05); padding: 25px; border-radius: 16px; margin: 30px 0; border: 1px solid rgba(52, 211, 153, 0.1); text-align: center;">
+                    <p style="margin: 0; color: #34d399; font-weight: 700;">Status: RESOLVED</p>
+                    <p style="margin: 5px 0 0 0; color: #64748b; font-size: 13px;">Thank you for helping us improve!</p>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="${process.env.FRONTEND_URL || 'https://dev2dev.online'}/dashboard" style="background: #6366f1; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Back to Platform</a>
+                </div>
+                <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.06); margin: 40px 0;">
+                <p style="font-size: 12px; color: #475569; text-align: center;">&copy; 2026 Dev2Dev. Elevate your craft.</p>
+            </div>
+        `;
+
+        const { data, error } = await resend.emails.send({
+            from: `${fromName} <support@dev2dev.online>`,
+            to: email,
+            subject: subject,
+            html: html,
+        });
+
+        if (error) {
+            console.error('[Resend Error] Failed to send resolution email:', error);
+            return { success: false, error: error.message };
+        }
+        return { success: true, data };
+    } catch (error) {
+        console.error('[Email Exception] Resolution email failed:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = { 
     sendPaymentConfirmation, 
     sendPremiumStatusChange, 
     sendPremiumExpiryWarning,
     sendWelcomeEmail,
+    sendFeedbackReceivedEmail,
+    sendFeedbackResolvedEmail,
     verifyConfig 
 };

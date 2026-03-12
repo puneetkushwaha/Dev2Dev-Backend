@@ -11,6 +11,13 @@ const feedbackSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    refNumber: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        index: true
+    },
     screenshotPath: {
         type: String,
         trim: true

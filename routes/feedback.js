@@ -44,6 +44,7 @@ const upload = multer({
 
 // User routes
 router.post('/', protect, upload.single('screenshot'), submitFeedback);
+router.get('/status/:refNumber', getFeedbackStatusByRef);
 
 // Admin routes
 router.get('/admin', protect, admin, getAllFeedback);
