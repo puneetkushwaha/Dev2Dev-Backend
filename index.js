@@ -55,13 +55,17 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     contentSecurityPolicy: {
+        useDefaults: true,
         directives: {
             "default-src": ["'self'"],
             "script-src": ["'self'", "'unsafe-inline'", "https://*.google.com"],
             "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            "img-src": ["'self'", "data:", "blob:", "https://dev2dev-backend.onrender.com", "http://localhost:5000", (process.env.FRONTEND_URL || '').replace(/\/$/, '')],
+            "img-src": ["'self'", "data:", "blob:", "https://*.onrender.com", "http://localhost:5000", (process.env.FRONTEND_URL || '').replace(/\/$/, '')],
             "connect-src": ["'self'", "https://*.onrender.com", "http://localhost:5000", "http://localhost:8000"],
             "font-src": ["'self'", "https://fonts.gstatic.com"],
+            "object-src": ["'none'"],
+            "media-src": ["'self'"],
+            "frame-src": ["'self'", "https://*.google.com"]
         }
     }
 }));
