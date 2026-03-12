@@ -53,8 +53,27 @@ app.use(express.json());
 // Security Middlewares
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" } // Balanced for Google Auth
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    contentSecurityPolicy: {
+        directives: {
+            "default-src": ["'self'"],
+            "script-src": ["'self'", "'unsafe-inline'", "https://*.google.com"],
+            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            "img-src": ["'self'", "data:", "blob:", "https://dev2dev-backend.onrender.com", "http://localhost:5000", (process.env.FRONTEND_URL || '').replace(/\/$/, '')],
+            "connect-src": ["'self'", "https://*.onrender.com", "http://localhost:5000", "http://localhost:8000"],
+            "font-src": ["'self'", "https://fonts.gstatic.com"],
+        }
+    }
 }));
+
+// Ensure uploads directory exists at startup
+const fs = require('fs');
+const path = require('path');
+const uploadsDir = path.join(__dirname, 'uploads/feedback');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('✅ Created uploads directory at startup');
+}
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -90,8 +109,10 @@ app.use('/api/contests', contestRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
 // Static files for uploads
-const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', (req, res, next) => {
+    console.log(`[Static] Request for ${req.url}`);
+    next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 // Health Check
 app.get('/health', (req, res) => {
