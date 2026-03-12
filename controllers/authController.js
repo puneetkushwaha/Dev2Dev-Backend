@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { sendWelcomeEmail } = require('../utils/emailService');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '542753851215-79kaaj2d9sn21l5169fcugk3cis59jbb.apps.googleusercontent.com';
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
@@ -48,6 +49,9 @@ const registerUser = async (req, res) => {
                 unlockedTutorials: validTutorials,
                 token: generateToken(user._id)
             });
+
+            // Send Welcome Email (Non-blocking)
+            sendWelcomeEmail(user.email, user.name).catch(err => console.error('Welcome email failed:', err));
         } else {
             res.status(400).json({ message: 'Invalid user data' });
         }
@@ -115,6 +119,9 @@ const googleLogin = async (req, res) => {
                 experience: "",
                 skills: []
             });
+
+            // Send Welcome Email for new Google users (Non-blocking)
+            sendWelcomeEmail(user.email, user.name).catch(err => console.error('Welcome email failed:', err));
         }
 
         const now = new Date();

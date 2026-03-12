@@ -175,9 +175,84 @@ const sendPremiumExpiryWarning = async (email, name, daysLeft) => {
     }
 };
 
+/**
+ * Send Welcome Email
+ */
+const sendWelcomeEmail = async (email, name) => {
+    try {
+        const subject = 'Welcome to Dev2Dev! 🚀';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://dev2dev.online';
+
+        const html = `
+            <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: auto; padding: 0; background-color: #050508; border-radius: 24px; overflow: hidden; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.08);">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); padding: 60px 40px; text-align: center;">
+                    <div style="background: rgba(99, 102, 241, 0.15); width: 80px; height: 80px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+                        <span style="font-size: 40px;">🚀</span>
+                    </div>
+                    <h1 style="margin: 0; font-size: 32px; font-weight: 800; color: #ffffff; letter-spacing: -0.025em;">Welcome to Dev2Dev</h1>
+                    <p style="color: #a5b4fc; font-size: 16px; margin-top: 12px; font-weight: 500;">Your journey to tech excellence starts here.</p>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 40px;">
+                    <h2 style="color: #ffffff; font-size: 24px; font-weight: 700; margin-bottom: 16px;">Hi ${name},</h2>
+                    <p style="color: #94a3b8; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
+                        We're thrilled to have you join our community of ambitious developers. Dev2Dev is designed to help you master DSA, ace your interviews, and stay ahead in the tech world.
+                    </p>
+
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 20px; padding: 32px; margin-bottom: 32px;">
+                        <h3 style="color: #ffffff; font-size: 18px; font-weight: 600; margin-top: 0; margin-bottom: 20px;">Quick Launchpad:</h3>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <a href="${frontendUrl}/problems" style="color: #818cf8; text-decoration: none; font-weight: 600; font-size: 15px;">→ Master Data Structures & Algos</a>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <a href="${frontendUrl}/mock-assessment" style="color: #818cf8; text-decoration: none; font-weight: 600; font-size: 15px;">→ Practice Mock Interviews</a>
+                        </div>
+                        <div>
+                            <a href="${frontendUrl}/tutorials" style="color: #818cf8; text-decoration: none; font-weight: 600; font-size: 15px;">→ Explore Core CS Tutorials</a>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
+                        <a href="${frontendUrl}/dashboard" style="background: #6366f1; color: #ffffff; padding: 18px 40px; text-decoration: none; border-radius: 14px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);">Get Started Now</a>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.06); margin: 40px 0;">
+
+                    <div style="text-align: center; color: #64748b; font-size: 14px;">
+                        <p style="margin: 0;">Built for engineers, by engineers.</p>
+                        <p style="margin: 8px 0 0 0;">&copy; 2026 Dev2Dev. Elevate your craft.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const { data, error } = await resend.emails.send({
+            from: `${fromName} <onboarding@dev2dev.online>`,
+            to: email,
+            subject: subject,
+            html: html,
+        });
+
+        if (error) {
+            console.error('[Resend Error] Failed to send welcome email:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`[Email] Welcome email sent to ${email} (ID: ${data.id})`);
+        return { success: true, data };
+    } catch (error) {
+        console.error('[Email Exception] Failed to send welcome email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = { 
     sendPaymentConfirmation, 
     sendPremiumStatusChange, 
     sendPremiumExpiryWarning,
+    sendWelcomeEmail,
     verifyConfig 
 };
