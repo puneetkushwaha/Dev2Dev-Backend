@@ -2,7 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const axios = require('axios');
 const helmet = require('helmet');
+
 const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
@@ -116,6 +118,32 @@ const server = app.listen(PORT, () => {
     console.log(`📧 Email Service: ${process.env.EMAIL_USER ? 'Configured (' + process.env.EMAIL_USER + ')' : 'MISSING'}`);
     console.log(`💳 Razorpay: ${process.env.RAZORPAY_KEY_ID ? 'Configured' : 'MISSING'}`);
 });
+
+// Keep-alive mechanism for Render Free Tier
+const keepAlive = () => {
+    const urls = [
+        'https://dev2dev-backend.onrender.com/health',
+        'https://dev2dev-ai.onrender.com/health'
+    ];
+    
+    console.log("⏱️ Starting Keep-Alive mechanism...");
+    
+    setInterval(async () => {
+        urls.forEach(async (url) => {
+            try {
+                const response = await axios.get(url);
+                console.log(`✅ Keep-Alive: Pinged ${url} - Status ${response.status}`);
+            } catch (error) {
+                console.error(`❌ Keep-Alive: Error pinging ${url} - ${error.message}`);
+            }
+        });
+    }, 14 * 60 * 1000); // Every 14 minutes
+};
+
+// Start keep-alive (Recommended to run only in production/Render)
+if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+    keepAlive();
+}
 
 // Global Error Handler
 app.use((err, req, res, next) => {
