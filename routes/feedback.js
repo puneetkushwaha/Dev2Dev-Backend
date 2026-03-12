@@ -7,6 +7,7 @@ const { protect, admin } = require('../middleware/authMiddleware');
 const {
     submitFeedback,
     getAllFeedback,
+    getFeedbackStatusByRef,
     updateFeedbackStatus
 } = require('../controllers/feedbackController');
 
