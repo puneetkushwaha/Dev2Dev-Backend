@@ -28,6 +28,8 @@ const allowedOrigins = [
     'https://dev2dev-backend.onrender.com',
     'https://dev2dev-ai.onrender.com',
     'https://dev2dev.online',
+    'https://cron-job.org',
+    'https://console.cron-job.org',
     'http://localhost:5173',
     'http://localhost:5000',
     (process.env.FRONTEND_URL || process.env.CORS_ORIGIN || '').replace(/\/$/, '')
@@ -38,8 +40,9 @@ app.use(cors({
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            console.error(`❌ CORS blocked for origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
+            console.warn(`⚠️ CORS blocked for origin: ${origin}`);
+            // Return 'null' instead of an Error to avoid a 500 error, instead it will just block the browser.
+            callback(null, false);
         }
     },
     credentials: true,
