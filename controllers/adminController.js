@@ -289,20 +289,29 @@ const verifyEmailConfig = async (req, res) => {
     }
 };
 
+const Visit = require('../models/Visit');
+
 const getDashboardStats = async (req, res) => {
     try {
-        const userCount = await User.countDocuments();
-        const domainCount = await Domain.countDocuments();
-        const topicCount = await Topic.countDocuments();
-        const examCount = await Exam.countDocuments();
-        const tutorialCount = await Tutorial.countDocuments();
+        const today = new Date().toISOString().split('T')[0];
+        
+        const [userCount, domainCount, topicCount, examCount, tutorialCount, todayVisit] = await Promise.all([
+            User.countDocuments(),
+            Domain.countDocuments(),
+            Topic.countDocuments(),
+            Exam.countDocuments(),
+            Tutorial.countDocuments(),
+            Visit.findOne({ date: today })
+        ]);
 
         res.json({
             users: userCount,
             domains: domainCount,
             topics: topicCount,
             exams: examCount,
-            tutorials: tutorialCount
+            tutorials: tutorialCount,
+            todayVisits: todayVisit ? todayVisit.totalHits : 0,
+            todayUniqueVisits: todayVisit ? todayVisit.uniqueIPs.length : 0
         });
     } catch (error) {
         console.error("Get Stats Error:", error);

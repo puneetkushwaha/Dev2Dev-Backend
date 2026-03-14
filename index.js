@@ -90,6 +90,8 @@ const limiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
+const trackVisit = require('./middleware/trackVisit');
+app.use('/api/', trackVisit); // Track all API calls as visits
 app.use('/api/', limiter); // Apply rate limiting to all API routes
 
 const strictLimiter = rateLimit({
